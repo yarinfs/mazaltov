@@ -2,8 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <!-- הגדרות Viewport סטנדרטיות לאתרים מודרניים -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>יום הולדת לאבא!</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@900&display=swap" rel="stylesheet">
@@ -19,33 +18,43 @@
             --bg-panel: #ffffff;
         }
 
-        /* --- עיצוב בסיסי ונקי --- */
-        
-        body {
-            margin: 0; padding: 0;
-            font-family: 'Rubik', sans-serif;
-            /* מאפשר גלילה טבעית אם צריך, אבל ממקם במרכז */
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            /* צבע רקע למקרה שהוידאו לא נטען */
+        /* --- התיקון הקריטי לבעיית ה"לבן/שחור" בקצוות --- */
+        html {
+            height: 100%;
+            /* זו הפקודה שמונעת את ה"קפיצה" והרקע הלבן/שחור בגלילת יתר */
+            overscroll-behavior: none;
             background-color: #000;
         }
 
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Rubik', sans-serif;
+            height: 100%;
+            width: 100%;
+            /* גלילה תתאפשר רק אם התוכן באמת חורג (כמו מקלדת) */
+            overflow-y: auto; 
+            overflow-x: hidden;
+            overscroll-behavior: none; /* שכבת הגנה שנייה */
+            
+            /* ממקם את התוכן במרכז כברירת מחדל */
+            display: flex;
+            align-items: center; 
+            justify-content: center;
+        }
+
+        /* כדי שהתוכן לא יזוז הצידה באייפון */
         * {
             box-sizing: border-box;
-            /* מניעת בחירת טקסט כדי שירגיש כמו משחק */
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* --- רקע מקובע (Fixed) --- */
-        /* הרקע נשאר במקום גם כשהדף נגלל - פתרון קלאסי */
+        /* וידאו רקע מקובע */
         #bg-video {
             position: fixed; top: 0; left: 0;
             width: 100%; height: 100%;
             object-fit: cover; z-index: -10;
+            pointer-events: none; /* מבטיח שלא יגנבו לחיצות */
         }
 
         .scanlines {
@@ -64,7 +73,8 @@
             background-color: var(--bg-panel);
             width: 90%; 
             max-width: 400px;
-            padding: 25px;
+            /* ביטול גובה קבוע כדי לאפשר למקלדת לדחוף דברים */
+            padding: 20px;
             text-align: center; 
             position: relative; 
             display: none;
@@ -73,8 +83,9 @@
             box-shadow: 10px 10px 0px rgba(0,0,0,0.6);
             z-index: 200;
             
-            /* נותן מרווח נשימה כשהמקלדת עולה או במסכים קטנים */
-            margin: 20px auto; 
+            /* מבטיח שיש רווח מלמעלה ומלמטה גם כשהמקלדת פתוחה */
+            margin-top: auto; 
+            margin-bottom: auto;
         }
 
         .active { 
@@ -85,48 +96,46 @@
         @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
         h1 {
-            font-weight: 900; font-size: 1.8rem; margin: 0 0 15px 0; color: var(--mario-red);
+            font-weight: 900; font-size: 1.8rem; margin: 0 0 10px 0; color: var(--mario-red);
             text-shadow: 2px 2px 0 #000; -webkit-text-stroke: 1px black;
         }
         
         .intro-text {
-            font-weight: 700; font-size: 1.1rem; color: #333; margin-bottom: 25px; line-height: 1.5;
+            font-weight: 700; font-size: 1rem; color: #333; margin-bottom: 20px; line-height: 1.4;
         }
 
         /* HUD */
         .hud-container {
             display: flex; justify-content: space-between; align-items: center;
-            background: var(--pipe-green); padding: 10px 15px; border-radius: 10px;
-            margin-bottom: 20px; border: 3px solid #000;
+            background: var(--pipe-green); padding: 8px 12px; border-radius: 10px;
+            margin-bottom: 15px; border: 3px solid #000;
             box-shadow: inset 0 4px 0 rgba(255,255,255,0.3), inset 0 -4px 0 rgba(0,0,0,0.2);
         }
         .hud-item {
             color: white; font-size: 0.9rem; font-weight: bold;
             display: flex; flex-direction: column; align-items: center; text-shadow: 1px 1px 0 #000;
         }
-        .timer-text { font-size: 1.8rem; color: #fff; text-shadow: 2px 2px 0 #000; font-weight: 900; line-height: 1; }
+        .timer-text { font-size: 1.6rem; color: #fff; text-shadow: 2px 2px 0 #000; font-weight: 900; line-height: 1; }
         .timer-label { font-size: 0.7rem; color: #e0ffd4; margin-bottom: 2px; }
 
-        /* שאלות */
         .math-block {
             background-color: var(--dirt-base);
             background-image:
                 linear-gradient(45deg, rgba(0,0,0,0.2) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.2) 75%),
                 linear-gradient(135deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.1) 75%);
             background-size: 20px 20px;
-            border: 4px solid #000; padding: 25px; margin: 20px 0;
+            border: 4px solid #000; padding: 20px; margin: 15px 0;
             color: #fff; font-size: 2.5rem; font-weight: 900; 
             text-shadow: 3px 3px 0 #000; -webkit-text-stroke: 2px black;
             direction: ltr; display: flex; justify-content: center; align-items: center; gap: 10px;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
         }
 
-        /* כפתורים ואינפוטים */
         .btn {
             background-color: var(--pipe-green); color: white;
             font-family: 'Rubik', sans-serif; font-weight: 900; font-size: 1.3rem;
-            padding: 15px 0; width: 100%; border: 3px solid #000; border-radius: 10px;
-            cursor: pointer; margin-top: 15px; box-shadow: 0 5px 0 var(--pipe-dark);
+            padding: 12px 0; width: 100%; border: 3px solid #000; border-radius: 10px;
+            cursor: pointer; margin-top: 10px; box-shadow: 0 5px 0 var(--pipe-dark);
             transition: all 0.1s; touch-action: manipulation;
         }
         .btn:active { transform: translateY(5px); box-shadow: 0 0 0 var(--pipe-dark); }
@@ -135,25 +144,28 @@
         .btn:disabled { background-color: #999; box-shadow: 0 5px 0 #666; cursor: wait; }
 
         input[type="tel"] {
-            width: 100%; padding: 15px; font-family: 'Rubik', sans-serif; font-weight: 900;
-            font-size: 2rem; text-align: center; border: 3px solid #000; border-radius: 10px;
+            width: 100%; padding: 10px; font-family: 'Rubik', sans-serif; font-weight: 900;
+            font-size: 1.8rem; text-align: center; border: 3px solid #000; border-radius: 10px;
             background: #fff; margin-bottom: 10px; outline: none;
         }
 
         .error-msg { 
             background-color: #ffcccc; color: var(--mario-red); border: 3px solid var(--mario-red);
-            border-radius: 8px; font-weight: 900; padding: 10px; display: none; margin-bottom: 15px;
-            font-size: 1.1rem; animation: shake 0.4s;
+            border-radius: 8px; font-weight: 900; padding: 8px; display: none; margin-bottom: 10px;
+            font-size: 1rem; animation: shake 0.4s;
         }
 
         .win-title { color: var(--coin-gold); -webkit-text-stroke: 1.5px black; text-shadow: 3px 3px 0 #000; animation: winZoom 1s infinite alternate; }
-        .note { background: #fff8dc; border: 3px dashed var(--coin-gold); padding: 15px; font-size: 1.1rem; line-height: 1.5; border-radius: 10px; margin-bottom: 20px; font-weight: bold; }
+        .note { background: #fff8dc; border: 3px dashed var(--coin-gold); padding: 12px; font-size: 1rem; line-height: 1.4; border-radius: 10px; margin-bottom: 15px; font-weight: bold; }
 
         @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 100% { transform: translateX(0); } }
         @keyframes winZoom { from { transform: scale(1); } to { transform: scale(1.1); } }
         .fail-screen { background: #220000; border: 4px solid var(--mario-red); }
-        .fail-text { color: var(--mario-red); font-size: 2.5rem; text-shadow: 2px 2px 0 #000; }
+        .fail-text { color: var(--mario-red); font-size: 2.2rem; text-shadow: 2px 2px 0 #000; }
 
+        /* ספייסר בתחתית כדי שהמקלדת לא תסתיר את הכפתור */
+        .spacer { height: 20px; }
+        
     </style>
 </head>
 <body>
@@ -193,6 +205,7 @@
         <div id="error-box" class="error-msg">טעות! ירד לך לב! 💔</div>
         
         <button class="btn" onclick="checkAnswer()">בדיקה</button>
+        <div class="spacer"></div> <!-- מרווח ביטחון -->
     </div>
 
     <!-- שלב 3: ניצחון -->
@@ -216,7 +229,7 @@
     </div>
 
     <script>
-        // --- מערכת סאונד (נשמרה כי היא עובדת מעולה) ---
+        // --- מערכת סאונד (ללא שינוי, עובדת מעולה) ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const soundBuffers = {};
         let bgSource = null;
@@ -233,7 +246,6 @@
                 const arrayBuffer = await response.arrayBuffer();
                 const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
                 soundBuffers[name] = audioBuffer;
-                console.log(`Sound loaded: ${name}`);
             } catch (error) {
                 console.error(`Failed to load sound ${name}:`, error);
             }
@@ -242,12 +254,10 @@
         async function initAudio() {
             const promises = Object.entries(audioFiles).map(([name, url]) => loadSound(name, url));
             await Promise.all(promises);
-            
             const btn = document.getElementById('init-game-btn');
             btn.innerText = "יאללה למבחן";
             btn.disabled = false;
         }
-
         initAudio();
 
         function playSound(name, loop = false, volume = 1.0) {
@@ -255,19 +265,14 @@
             if (name === 'bg' && bgSource) {
                 try { bgSource.stop(); } catch(e){}
             }
-
             const source = audioCtx.createBufferSource();
             source.buffer = soundBuffers[name];
             source.loop = loop;
-
             const gainNode = audioCtx.createGain();
             gainNode.gain.value = volume;
-
             source.connect(gainNode);
             gainNode.connect(audioCtx.destination);
-
             source.start(0);
-
             if (name === 'bg') bgSource = source;
         }
 
@@ -278,7 +283,7 @@
             }
         }
 
-        // --- לוגיקת משחק (ללא שום חסימות גלילה) ---
+        // --- לוגיקת משחק ותיקוני מקלדת ---
 
         const questions = [
             { n1: 111,  op: '×', n2: 14,  ans: 1554 },
@@ -293,9 +298,7 @@
         let timerInterval;
 
         document.getElementById('init-game-btn').addEventListener('click', function() {
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
             startGame();
         });
 
@@ -339,7 +342,6 @@
                 `<span>${q.n1}</span> <span>${q.op}</span> <span>${q.n2}</span>`;
             document.getElementById('answer-input').value = '';
             document.getElementById('error-box').style.display = 'none';
-            // לא עושים פוקוס אוטומטי כי זה מקפיץ את המקלדת
         }
 
         function checkAnswer() {
@@ -377,6 +379,25 @@
         function moreConfetti() {
             confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#E52521', '#43B047', '#FFD700', '#0099ff'] });
         }
+
+        // --- תיקון אגרסיבי למקלדת ---
+        // ברגע שהחלון משנה גודל (מקלדת נפתחת), אנחנו גוללים את השדה לאמצע
+        // אבל בלי לחשוף רקע לבן בגלל ה-CSS ששמנו למעלה
+        const inputField = document.getElementById('answer-input');
+        
+        inputField.addEventListener('focus', () => {
+            // המתנה קצרה שהמקלדת תעלה
+            setTimeout(() => {
+                inputField.scrollIntoView({behavior: "smooth", block: "center"});
+            }, 300);
+        });
+
+        window.addEventListener('resize', () => {
+            if(document.activeElement === inputField) {
+                 inputField.scrollIntoView({behavior: "smooth", block: "center"});
+            }
+        });
+
     </script>
 </body>
 </html>
