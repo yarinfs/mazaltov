@@ -215,6 +215,12 @@
             flex-shrink: 0;
         }
 
+        .question-counter {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
         .math-block {
             background-color: var(--dirt-base);
             background-image:
@@ -317,9 +323,6 @@
             font-size: 1.5rem;
         }
 
-        /* ═══════════════════════════════════════════════════════════
-           ERROR STATE FOR INPUT - Replaces separate error box
-           ═══════════════════════════════════════════════════════════ */
         input[type="tel"].input-error {
             background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
             border-color: #8a0000;
@@ -337,17 +340,6 @@
             0%, 100% { transform: translateX(0); }
             10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
             20%, 40%, 60%, 80% { transform: translateX(8px); }
-        }
-
-        /* Pulse effect when error happens */
-        @keyframes errorPulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(255, 0, 0, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
-        }
-
-        input[type="tel"].input-error-pulse {
-            animation: errorShake 0.5s ease-in-out, errorPulse 0.6s ease-out;
         }
 
         .win-title {
@@ -411,6 +403,10 @@
                 <div class="hud-item">
                     <span class="timer-label">זמן</span>
                     <span id="time-left" class="timer-text">60</span>
+                </div>
+                <div class="hud-item">
+                    <span class="timer-label">שאלה</span>
+                    <span id="question-counter" class="timer-text">1/4</span>
                 </div>
                 <div class="hud-item">
                     <span class="timer-label">חיים</span>
@@ -623,21 +619,54 @@
         }
 
         // ═══════════════════════════════════════════════════════════════════
+        // RANDOM QUESTION GENERATOR
+        // ═══════════════════════════════════════════════════════════════════
+
+        // Generate a random number with a specific number of digits
+        function randomNumber(digits) {
+            const min = Math.pow(10, digits - 1);
+            const max = Math.pow(10, digits) - 1;
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // Generate all 4 random questions
+        function generateQuestions() {
+            const questions = [];
+
+            // Question 1: 3-digit × 2-digit (e.g., 654 × 42)
+            let n1 = randomNumber(3);
+            let n2 = randomNumber(2);
+            questions.push({ n1, op: '×', n2, ans: n1 * n2 });
+
+            // Question 2: 2-digit × 3-digit (e.g., 12 × 810)
+            n1 = randomNumber(2);
+            n2 = randomNumber(3);
+            questions.push({ n1, op: '×', n2, ans: n1 * n2 });
+
+            // Question 3: 4-digit - 4-digit (ensure positive result)
+            n1 = randomNumber(4);
+            n2 = randomNumber(4);
+            if (n2 > n1) [n1, n2] = [n2, n1]; // Swap to ensure positive result
+            questions.push({ n1, op: '-', n2, ans: n1 - n2 });
+
+            // Question 4: 1-digit - 1-digit (easy one, ensure positive)
+            n1 = Math.floor(Math.random() * 5) + 5; // 5-9
+            n2 = Math.floor(Math.random() * (n1 - 1)) + 1; // 1 to (n1-1)
+            questions.push({ n1, op: '-', n2, ans: n1 - n2 });
+
+            return questions;
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
         // GAME LOGIC
         // ═══════════════════════════════════════════════════════════════════
 
-        const questions = [
-            { n1: 111,  op: '×', n2: 14,  ans: 1554 },
-            { n1: 12,  op: '×', n2: 810,  ans: 9720 },
-            { n1: 8765, op: '-', n2: 1563, ans: 7202 },
-            { n1: 4, op: '-', n2: 2,  ans: 2 }
-        ];
-
+        let questions = [];
         let currentQ = 0;
         let timeLeft = 60;
         let lives = 3;
         let timerInterval;
-        let isShowingError = false; // Flag to prevent multiple error triggers
+        let isShowingError = false;
 
         document.getElementById('init-game-btn').addEventListener('click', function() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -649,15 +678,25 @@
         document.getElementById('retry-btn').addEventListener('click', () => location.reload());
 
         function startGame() {
+            // Generate fresh random questions each time
+            questions = generateQuestions();
+            
+            // Reset game state
+            currentQ = 0;
+            timeLeft = 60;
+            lives = 3;
+            
             playSound('bg', true, 0.5);
             document.getElementById('screen-1').classList.remove('active');
             document.getElementById('screen-2').classList.add('active');
             startTimer();
             loadQuestion();
             updateLives();
+            updateQuestionCounter();
         }
 
         function startTimer() {
+            document.getElementById('time-left').style.color = '#fff';
             timerInterval = setInterval(function() {
                 timeLeft--;
                 document.getElementById('time-left').innerText = timeLeft;
@@ -676,6 +715,10 @@
             document.getElementById('lives-display').innerText = hearts;
         }
 
+        function updateQuestionCounter() {
+            document.getElementById('question-counter').innerText = `${currentQ + 1}/${questions.length}`;
+        }
+
         function gameOver(reason) {
             clearInterval(timerInterval);
             stopBackgroundMusic();
@@ -691,6 +734,7 @@
             document.getElementById('question-display').innerHTML = 
                 `<span>${q.n1}</span> <span>${q.op}</span> <span>${q.n2}</span>`;
             document.getElementById('answer-input').value = '';
+            updateQuestionCounter();
         }
 
         // ═══════════════════════════════════════════════════════════════════
@@ -698,24 +742,19 @@
         // ═══════════════════════════════════════════════════════════════════
         
         function showInputError() {
-            if (isShowingError) return; // Prevent multiple triggers
+            if (isShowingError) return;
             isShowingError = true;
             
             const input = document.getElementById('answer-input');
-            
-            // Store original placeholder
             const originalPlaceholder = input.placeholder;
             
-            // Apply error state
             input.classList.add('input-error');
             input.value = 'טעות! 💔';
             input.disabled = true;
             input.readOnly = true;
             
-            // Vibrate device
             if (navigator.vibrate) navigator.vibrate(200);
             
-            // Reset after 1 second
             setTimeout(() => {
                 input.classList.remove('input-error');
                 input.value = '';
@@ -724,18 +763,15 @@
                 input.readOnly = false;
                 isShowingError = false;
                 
-                // Check if game over after showing error
                 if (lives === 0) {
                     gameOver("נגמרו החיים!");
                 } else {
-                    // Refocus the input for next attempt
                     input.focus();
                 }
             }, 1000);
         }
 
         function checkAnswer() {
-            // Don't check if currently showing error
             if (isShowingError) return;
             
             const input = document.getElementById('answer-input');
@@ -753,7 +789,6 @@
                     finishGame();
                 }
             } else {
-                // Wrong answer - show error in input
                 lives--;
                 updateLives();
                 showInputError();
