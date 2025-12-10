@@ -16,13 +16,9 @@
             --coin-gold: #FFD700;
             --dirt-base: #5c3c20;
             --bg-panel: #ffffff;
-            /* Dynamic viewport height - updated by JS */
             --app-height: 100%;
         }
 
-        /* ═══════════════════════════════════════════════════════════
-           CRITICAL iOS FIX: Lock everything in place
-           ═══════════════════════════════════════════════════════════ */
         html {
             position: fixed;
             top: 0;
@@ -45,7 +41,6 @@
             overflow: hidden;
             overscroll-behavior: none;
             font-family: 'Rubik', sans-serif;
-            /* Prevent iOS rubber-banding */
             -webkit-overflow-scrolling: auto;
         }
 
@@ -54,40 +49,29 @@
             user-select: none;
             -webkit-user-select: none;
             -webkit-tap-highlight-color: transparent;
-            /* Prevent text selection on long press */
             -webkit-touch-callout: none;
         }
 
-        /* ═══════════════════════════════════════════════════════════
-           APP WRAPPER: The magic container that resizes with keyboard
-           ═══════════════════════════════════════════════════════════ */
         .app-wrapper {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            /* This height is controlled by JavaScript */
             height: var(--app-height);
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            /* Smooth transition when keyboard opens/closes */
             transition: height 0.15s ease-out;
-            /* Prevent any touch scrolling */
             touch-action: none;
         }
 
-        /* When keyboard is active, align content to top with padding */
         .app-wrapper.keyboard-open {
             align-items: flex-start;
             padding-top: 15px;
             padding-bottom: 10px;
         }
 
-        /* ═══════════════════════════════════════════════════════════
-           BACKGROUND ELEMENTS
-           ═══════════════════════════════════════════════════════════ */
         #bg-video {
             position: fixed;
             top: 0;
@@ -122,14 +106,10 @@
             pointer-events: none;
         }
 
-        /* ═══════════════════════════════════════════════════════════
-           GAME PANEL: Flexible, scrollable content box
-           ═══════════════════════════════════════════════════════════ */
         .game-panel {
             background-color: var(--bg-panel);
             width: 90%; 
             max-width: 400px;
-            /* Maximum height with room for shadows */
             max-height: calc(100% - 30px);
             padding: 20px;
             text-align: center; 
@@ -140,14 +120,12 @@
             border-radius: 15px;
             box-shadow: 10px 10px 0px rgba(0,0,0,0.6);
             z-index: 200;
-            /* Allow internal scrolling if content overflows */
             overflow-y: auto;
             overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: contain;
         }
 
-        /* Compact mode when keyboard is open */
         .keyboard-open .game-panel {
             padding: 15px;
             max-height: calc(100% - 20px);
@@ -163,9 +141,6 @@
             100% { transform: scale(1); opacity: 1; } 
         }
 
-        /* ═══════════════════════════════════════════════════════════
-           UI COMPONENTS
-           ═══════════════════════════════════════════════════════════ */
         h1 {
             font-weight: 900;
             font-size: 1.8rem;
@@ -185,7 +160,6 @@
             flex-shrink: 0;
         }
 
-        /* Compact text when keyboard is open */
         .keyboard-open .intro-text {
             font-size: 0.9rem;
             margin-bottom: 15px;
@@ -286,7 +260,6 @@
             transition: transform 0.1s, box-shadow 0.1s;
             touch-action: manipulation;
             flex-shrink: 0;
-            /* Prevent iOS button styling */
             -webkit-appearance: none;
         }
 
@@ -329,9 +302,9 @@
             margin-bottom: 8px;
             outline: none;
             flex-shrink: 0;
-            /* iOS input fixes */
             -webkit-appearance: none;
             appearance: none;
+            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
         }
 
         input[type="tel"]:focus {
@@ -344,18 +317,37 @@
             font-size: 1.5rem;
         }
 
-        .error-msg { 
-            background-color: #ffcccc;
-            color: var(--mario-red);
-            border: 3px solid var(--mario-red);
-            border-radius: 8px;
-            font-weight: 900;
-            padding: 8px;
-            display: none;
-            margin-bottom: 8px;
-            font-size: 0.95rem;
-            animation: shake 0.4s;
-            flex-shrink: 0;
+        /* ═══════════════════════════════════════════════════════════
+           ERROR STATE FOR INPUT - Replaces separate error box
+           ═══════════════════════════════════════════════════════════ */
+        input[type="tel"].input-error {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+            border-color: #8a0000;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            animation: errorShake 0.5s ease-in-out;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5), inset 0 0 10px rgba(0,0,0,0.2);
+        }
+
+        input[type="tel"].input-error::placeholder {
+            color: rgba(255,255,255,0.8);
+        }
+
+        @keyframes errorShake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+            20%, 40%, 60%, 80% { transform: translateX(8px); }
+        }
+
+        /* Pulse effect when error happens */
+        @keyframes errorPulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 0, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
+        }
+
+        input[type="tel"].input-error-pulse {
+            animation: errorShake 0.5s ease-in-out, errorPulse 0.6s ease-out;
         }
 
         .win-title {
@@ -375,12 +367,6 @@
             margin-bottom: 15px;
             font-weight: bold;
             flex-shrink: 0;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
         }
 
         @keyframes winZoom {
@@ -407,7 +393,6 @@
     </video>
     <div class="overlay"></div>
 
-    <!-- Main App Wrapper - Height controlled by JavaScript -->
     <div class="app-wrapper" id="app-wrapper">
         
         <!-- שלב 1: פתיחה -->
@@ -438,8 +423,6 @@
             
             <input type="tel" id="answer-input" placeholder="?" autocomplete="off" inputmode="numeric">
             
-            <div id="error-box" class="error-msg">טעות! ירד לך לב! 💔</div>
-            
             <button class="btn" id="check-btn">בדיקה</button>
         </div>
 
@@ -466,7 +449,7 @@
 
     <script>
         // ═══════════════════════════════════════════════════════════════════
-        // iOS KEYBOARD FIX - Using Visual Viewport API
+        // iOS KEYBOARD FIX
         // ═══════════════════════════════════════════════════════════════════
         
         const appWrapper = document.getElementById('app-wrapper');
@@ -474,17 +457,13 @@
         let isKeyboardOpen = false;
         let initialHeight = window.innerHeight;
         
-        // Update the app height based on available viewport
         function setAppHeight() {
-            // Use visualViewport API for iOS (most reliable)
             const vh = window.visualViewport 
                 ? window.visualViewport.height 
                 : window.innerHeight;
             
-            // Set CSS variable
             document.documentElement.style.setProperty('--app-height', `${vh}px`);
             
-            // Detect if keyboard is likely open (height reduced significantly)
             const heightReduction = initialHeight - vh;
             const keyboardLikelyOpen = heightReduction > 100;
             
@@ -497,32 +476,24 @@
             }
         }
 
-        // Initial setup
         setAppHeight();
         
-        // Listen to Visual Viewport changes (iOS 13+)
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', setAppHeight);
-            
-            // Prevent viewport from scrolling when keyboard appears
             window.visualViewport.addEventListener('scroll', (e) => {
-                // Force scroll position to top
                 if (window.visualViewport.offsetTop > 0) {
                     window.scrollTo(0, 0);
                 }
             });
         }
         
-        // Fallback for older browsers
         window.addEventListener('resize', () => {
-            // Update initial height when orientation changes
             if (!isKeyboardOpen) {
                 initialHeight = window.innerHeight;
             }
             setAppHeight();
         });
         
-        // Handle orientation change
         window.addEventListener('orientationchange', () => {
             setTimeout(() => {
                 initialHeight = window.innerHeight;
@@ -531,37 +502,31 @@
         });
 
         // ═══════════════════════════════════════════════════════════════════
-        // PREVENT ALL UNWANTED SCROLLING
+        // PREVENT UNWANTED SCROLLING
         // ═══════════════════════════════════════════════════════════════════
         
-        // Prevent touchmove on the wrapper (but allow on scrollable panels)
         appWrapper.addEventListener('touchmove', function(e) {
             const target = e.target;
             const panel = target.closest('.game-panel');
             
-            // If we're inside a panel and it's scrollable, allow it
             if (panel && panel.scrollHeight > panel.clientHeight) {
                 const isAtTop = panel.scrollTop === 0;
                 const isAtBottom = panel.scrollTop + panel.clientHeight >= panel.scrollHeight;
                 
-                // Determine scroll direction
                 const touch = e.touches[0];
                 const lastY = panel.dataset.lastY ? parseFloat(panel.dataset.lastY) : touch.clientY;
                 const deltaY = touch.clientY - lastY;
                 panel.dataset.lastY = touch.clientY;
                 
-                // Prevent overscroll at boundaries
                 if ((isAtTop && deltaY > 0) || (isAtBottom && deltaY < 0)) {
                     e.preventDefault();
                 }
                 return;
             }
             
-            // Prevent scroll on everything else
             e.preventDefault();
         }, { passive: false });
         
-        // Reset lastY on touch start
         appWrapper.addEventListener('touchstart', function(e) {
             const panel = e.target.closest('.game-panel');
             if (panel) {
@@ -569,7 +534,6 @@
             }
         }, { passive: true });
 
-        // Prevent elastic scroll on document
         document.addEventListener('touchmove', function(e) {
             if (!e.target.closest('.game-panel')) {
                 e.preventDefault();
@@ -581,14 +545,12 @@
         // ═══════════════════════════════════════════════════════════════════
         
         inputField.addEventListener('focus', () => {
-            // Delay to allow keyboard to fully open
             setTimeout(setAppHeight, 100);
             setTimeout(setAppHeight, 300);
             setTimeout(setAppHeight, 500);
         });
 
         inputField.addEventListener('blur', () => {
-            // Delay to allow keyboard to close
             setTimeout(() => {
                 isKeyboardOpen = false;
                 appWrapper.classList.remove('keyboard-open');
@@ -596,7 +558,6 @@
             }, 100);
         });
 
-        // Handle Enter key
         inputField.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -676,8 +637,8 @@
         let timeLeft = 60;
         let lives = 3;
         let timerInterval;
+        let isShowingError = false; // Flag to prevent multiple error triggers
 
-        // Event Listeners
         document.getElementById('init-game-btn').addEventListener('click', function() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             startGame();
@@ -730,12 +691,57 @@
             document.getElementById('question-display').innerHTML = 
                 `<span>${q.n1}</span> <span>${q.op}</span> <span>${q.n2}</span>`;
             document.getElementById('answer-input').value = '';
-            document.getElementById('error-box').style.display = 'none';
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // INLINE ERROR DISPLAY IN INPUT BOX
+        // ═══════════════════════════════════════════════════════════════════
+        
+        function showInputError() {
+            if (isShowingError) return; // Prevent multiple triggers
+            isShowingError = true;
+            
+            const input = document.getElementById('answer-input');
+            
+            // Store original placeholder
+            const originalPlaceholder = input.placeholder;
+            
+            // Apply error state
+            input.classList.add('input-error');
+            input.value = 'טעות! 💔';
+            input.disabled = true;
+            input.readOnly = true;
+            
+            // Vibrate device
+            if (navigator.vibrate) navigator.vibrate(200);
+            
+            // Reset after 1 second
+            setTimeout(() => {
+                input.classList.remove('input-error');
+                input.value = '';
+                input.placeholder = originalPlaceholder;
+                input.disabled = false;
+                input.readOnly = false;
+                isShowingError = false;
+                
+                // Check if game over after showing error
+                if (lives === 0) {
+                    gameOver("נגמרו החיים!");
+                } else {
+                    // Refocus the input for next attempt
+                    input.focus();
+                }
+            }, 1000);
         }
 
         function checkAnswer() {
-            const val = document.getElementById('answer-input').value;
-            if(val === "") return;
+            // Don't check if currently showing error
+            if (isShowingError) return;
+            
+            const input = document.getElementById('answer-input');
+            const val = input.value.trim();
+            
+            if (val === "") return;
             
             const correct = questions[currentQ].ans;
 
@@ -747,12 +753,10 @@
                     finishGame();
                 }
             } else {
+                // Wrong answer - show error in input
                 lives--;
                 updateLives();
-                document.getElementById('error-box').style.display = 'block';
-                document.getElementById('answer-input').value = '';
-                if (navigator.vibrate) navigator.vibrate(200);
-                if (lives === 0) gameOver("נגמרו החיים!");
+                showInputError();
             }
         }
 
@@ -762,7 +766,6 @@
             playSound('win', false, 1.0);
             document.getElementById('screen-2').classList.remove('active');
             document.getElementById('screen-3').classList.add('active');
-            // Blur input to close keyboard
             inputField.blur();
             moreConfetti();
             setInterval(moreConfetti, 2500);
