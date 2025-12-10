@@ -2,7 +2,6 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <!-- Viewport settings to prevent zooming and handle notches (viewport-fit=cover) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>יום הולדת לאבא!</title>
     
@@ -19,77 +18,80 @@
             --bg-panel: #ffffff;
         }
 
-        /* --- MOBILE LOCKDOWN CSS --- */
-        html {
-            height: 100%;
-            width: 100%;
-            overflow: hidden; /* No scrollbars */
-            position: fixed; /* Locks the document in place */
+        /* --- תיקון הגלילה (השיטה החדשה) --- */
+        
+        /* 1. נועלים את הדף עצמו שלא יזוז בכלל */
+        html, body {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            position: fixed; /* קיבוע קריטי לאייפון */
+            overflow: hidden; 
+            background: #000;
+            font-family: 'Rubik', sans-serif;
         }
 
-        body {
-            margin: 0; padding: 0;
-            height: 100%; width: 100%;
-            overflow: hidden; /* Double lock */
-            position: fixed; /* Double lock */
-            font-family: 'Rubik', sans-serif;
-            display: flex; align-items: center; justify-content: center;
-            background: #000;
-            /* Prevent default browser gestures like swipe-nav */
-            touch-action: none; 
-            /* Disable pull-to-refresh rubber banding */
-            overscroll-behavior: none;
+        /* 2. מיכל ראשי שתופס את כל המסך ומאפשר גלילה פנימית נקייה */
+        #main-wrapper {
+            width: 100%;
+            height: 100%; /* או 100dvh לדפדפנים חדשים */
+            height: 100dvh; 
+            overflow-y: auto; /* מאפשר גלילה אנכית כשצריך */
+            -webkit-overflow-scrolling: touch; /* גלילה חלקה באייפון */
+            
+            /* שורת הקסם: מונעת את ה"קפיציות" (Rubber Banding) של כל העמוד */
+            overscroll-behavior-y: none; 
+            
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* שימוש ב-before/after pseudo-elements עוזר למרכז תוך כדי אפשרות גלילה */
+        }
+        
+        /* המרכוז נעשה כאן בצורה שלא שוברת גלילה */
+        #main-wrapper::before, #main-wrapper::after {
+            content: '';
+            flex: 1; /* דוחף את התוכן לאמצע */
+            min-height: 20px; /* רווח ביטחון מינימלי */
         }
 
         * {
             box-sizing: border-box;
-            user-select: none; /* Prevent text selection */
+            user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* Background Video */
+        /* וידאו רקע */
         #bg-video {
-            position: absolute; top: 0; left: 0;
+            position: fixed; top: 0; left: 0; /* Fixed כדי שלא יגלול עם התוכן */
             width: 100%; height: 100%;
             object-fit: cover; z-index: -10;
         }
 
-        /* Retro Scanlines Effect */
         .scanlines {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
             background-size: 100% 4px; pointer-events: none; z-index: 100;
         }
-        
-        /* Dark Overlay for readability */
         .overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.5); z-index: -5;
         }
 
-        /* --- GAME PANEL --- */
+        /* הלוח הראשי */
         .game-panel {
             background-color: var(--bg-panel);
             width: 90%; 
             max-width: 400px;
-            
-            /* Use dvh (Dynamic Viewport Height) for mobile browsers */
-            max-height: 90dvh; 
-            
-            /* Allow internal scrolling ONLY if content overflows (e.g. keyboard open) */
-            overflow-y: auto; 
-            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-            
+            /* ביטלתי את ה-max-height הקבוע - תן לתוכן לקבוע את הגובה */
             padding: 20px;
             text-align: center; position: relative; display: none;
             border: 4px solid black;
             border-radius: 15px;
             box-shadow: 10px 10px 0px rgba(0,0,0,0.6);
-            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             z-index: 200;
+            margin: 20px 0; /* רווח מלמעלה למטה כדי שיהיה לאן לגלול */
         }
-        .active { display: block; }
-        
+        .active { display: block; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
         h1 {
@@ -101,7 +103,6 @@
             font-weight: 700; font-size: 1.1rem; color: #333; margin-bottom: 20px; line-height: 1.4;
         }
 
-        /* HUD */
         .hud-container {
             display: flex; justify-content: space-between; align-items: center;
             background: var(--pipe-green); padding: 8px 12px; border-radius: 10px;
@@ -112,12 +113,9 @@
             color: white; font-size: 0.9rem; font-weight: bold;
             display: flex; flex-direction: column; align-items: center; text-shadow: 1px 1px 0 #000;
         }
-        .timer-text {
-            font-size: 1.6rem; color: #fff; text-shadow: 2px 2px 0 #000; font-weight: 900; line-height: 1;
-        }
+        .timer-text { font-size: 1.6rem; color: #fff; text-shadow: 2px 2px 0 #000; font-weight: 900; line-height: 1; }
         .timer-label { font-size: 0.7rem; color: #e0ffd4; margin-bottom: 2px; }
 
-        /* Math Question Block */
         .math-block {
             background-color: var(--dirt-base);
             background-image:
@@ -136,22 +134,17 @@
             font-family: 'Rubik', sans-serif; font-weight: 900; font-size: 1.3rem;
             padding: 12px 0; width: 100%; border: 3px solid #000; border-radius: 10px;
             cursor: pointer; margin-top: 10px; box-shadow: 0 5px 0 var(--pipe-dark);
-            transition: all 0.1s;
-            /* Prevents delay and double-tap zoom on mobile */
-            touch-action: manipulation;
+            transition: all 0.1s; touch-action: manipulation;
         }
         .btn:active { transform: translateY(5px); box-shadow: 0 0 0 var(--pipe-dark); }
         .btn-start { background-color: var(--mario-red); box-shadow: 0 5px 0 #8a0000; }
         .btn-start:active { box-shadow: 0 0 0 #8a0000; }
-        
         .btn:disabled { background-color: #999; box-shadow: 0 5px 0 #666; cursor: wait; }
 
         input[type="tel"] {
             width: 100%; padding: 10px; font-family: 'Rubik', sans-serif; font-weight: 900;
             font-size: 1.8rem; text-align: center; border: 3px solid #000; border-radius: 10px;
             background: #fff; margin-bottom: 10px; outline: none;
-            /* Prevents auto-zoom on iPhone (must be 16px or larger text actually, but this helps) */
-            font-size: 1.8rem; 
         }
 
         .error-msg { 
@@ -172,89 +165,70 @@
 </head>
 <body>
 
-    <!-- A transparent blocker for extra safety -->
-    <div style="position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1;"></div>
-
     <div class="scanlines"></div>
     <video id="bg-video" autoplay muted loop playsinline webkit-playsinline><source src="background.mp4" type="video/mp4"></video>
     <div class="overlay"></div>
 
-    <!-- Screen 1: Intro -->
-    <div id="screen-1" class="game-panel active">
-        <h1>תעצור! 🛑</h1>
-        <p class="intro-text">
-            לפני שמתחילים אני צריך לבדוק אם אתה באמת אבא שלי.
-            בשביל זה הכנתי לך מבחן בחשבון שבו אתה צריך להראות את המהירות שלך!
-        </p>
-        <button class="btn btn-start" id="init-game-btn" disabled>טוען סאונד...</button>
-    </div>
-
-    <!-- Screen 2: Game -->
-    <div id="screen-2" class="game-panel">
-        <div class="hud-container">
-            <div class="hud-item">
-                <span class="timer-label">זמן</span>
-                <span id="time-left" class="timer-text">60</span>
-            </div>
-            <div class="hud-item">
-                <span class="timer-label">חיים</span>
-                <span id="lives-display" style="font-size: 1.2rem;">❤️❤️❤️</span>
-            </div>
+    <!-- עוטף גלילה ראשי - זה הפתרון -->
+    <div id="main-wrapper">
+        
+        <!-- שלב 1: פתיחה -->
+        <div id="screen-1" class="game-panel active">
+            <h1>תעצור! 🛑</h1>
+            <p class="intro-text">
+                לפני שמתחילים אני צריך לבדוק אם אתה באמת אבא שלי.
+                בשביל זה הכנתי לך מבחן בחשבון שבו אתה צריך להראות את המהירות שלך!
+            </p>
+            <button class="btn btn-start" id="init-game-btn" disabled>טוען סאונד...</button>
         </div>
 
-        <p style="margin: 0; font-weight: bold; color: #555;">תפתור את התרגיל:</p>
-        <div id="question-display" class="math-block"></div>
-        
-        <input type="tel" id="answer-input" placeholder="?" autocomplete="off" inputmode="numeric">
-        
-        <div id="error-box" class="error-msg">טעות! ירד לך לב! 💔</div>
-        
-        <button class="btn" onclick="checkAnswer()">בדיקה</button>
-    </div>
+        <!-- שלב 2: משחק -->
+        <div id="screen-2" class="game-panel">
+            <div class="hud-container">
+                <div class="hud-item">
+                    <span class="timer-label">זמן</span>
+                    <span id="time-left" class="timer-text">60</span>
+                </div>
+                <div class="hud-item">
+                    <span class="timer-label">חיים</span>
+                    <span id="lives-display" style="font-size: 1.2rem;">❤️❤️❤️</span>
+                </div>
+            </div>
 
-    <!-- Screen 3: Win -->
-    <div id="screen-3" class="game-panel">
-        <h1 class="win-title">מזל טוב! 👑</h1>
-        <div class="note">
-            לאבא הכי טוב בעולם,<br>
-            עברת את המבחן בזמן!<br>
-            המון מזל טוב ליום ההולדת. אתה האבא הכי טוב שיכולתי לבקש אתה תמיד שם בשבילי ובשביל מעיין <br>
-            אוהב אותך מלא מזל טוב! ❤️ 
+            <p style="margin: 0; font-weight: bold; color: #555;">תפתור את התרגיל:</p>
+            <div id="question-display" class="math-block"></div>
+            
+            <input type="tel" id="answer-input" placeholder="?" autocomplete="off" inputmode="numeric">
+            
+            <div id="error-box" class="error-msg">טעות! ירד לך לב! 💔</div>
+            
+            <button class="btn" onclick="checkAnswer()">בדיקה</button>
         </div>
-        <button class="btn btn-start" onclick="moreConfetti()">תלחץ לעוד קונפטי!</button>
-    </div>
 
-    <!-- Screen 4: Fail -->
-    <div id="screen-fail" class="game-panel fail-screen">
-        <h1 class="fail-text">גיים אובר!</h1>
-        <p id="fail-reason" style="color: white; font-weight: bold; font-size: 1.2rem;">הזמן נגמר...</p>
-        <h2 style="color: #ffaaaa; margin-top: 20px;">אתה לא אבא שלי! 😡</h2>
-        <button class="btn" onclick="location.reload()">נסה שוב</button>
-    </div>
+        <!-- שלב 3: ניצחון -->
+        <div id="screen-3" class="game-panel">
+            <h1 class="win-title">מזל טוב! 👑</h1>
+            <div class="note">
+                לאבא הכי טוב בעולם,<br>
+                עברת את המבחן בזמן!<br>
+                המון מזל טוב ליום ההולדת. אתה האבא הכי טוב שיכולתי לבקש אתה תמיד שם בשבילי ובשביל מעיין <br>
+                אוהב אותך מלא מזל טוב! ❤️ 
+            </div>
+            <button class="btn btn-start" onclick="moreConfetti()">תלחץ לעוד קונפטי!</button>
+        </div>
+
+        <!-- שלב 4: הפסד -->
+        <div id="screen-fail" class="game-panel fail-screen">
+            <h1 class="fail-text">גיים אובר!</h1>
+            <p id="fail-reason" style="color: white; font-weight: bold; font-size: 1.2rem;">הזמן נגמר...</p>
+            <h2 style="color: #ffaaaa; margin-top: 20px;">אתה לא אבא שלי! 😡</h2>
+            <button class="btn" onclick="location.reload()">נסה שוב</button>
+        </div>
+
+    </div> <!-- סוף main-wrapper -->
 
     <script>
-        // --- 1. Mobile Scrolling & Gesture Blocker ---
-        
-        // This effectively blocks "rubber band" scrolling on the body
-        document.body.addEventListener('touchmove', function(e) {
-            // Find if the touch is happening inside a .game-panel
-            const panel = e.target.closest('.game-panel');
-            
-            // If touch is NOT in the panel, BLOCK IT.
-            if (!panel) {
-                e.preventDefault();
-            } else {
-                // If inside panel, check if it actually has scrollable content
-                const isScrollable = panel.scrollHeight > panel.clientHeight;
-                if (!isScrollable) {
-                     // If panel fits on screen, block scrolling inside it too to prevent bounce
-                    e.preventDefault();
-                }
-                // Otherwise, let it scroll normally (for when keyboard opens)
-            }
-        }, { passive: false });
-
-        // --- 2. Web Audio API (Fixes iPhone Audio) ---
+        // --- Web Audio API (נשאר אותו דבר כי זה עובד מצוין) ---
         
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const soundBuffers = {};
@@ -317,8 +291,9 @@
             }
         }
 
-        // --- 3. Game Logic ---
-        
+        // --- לוגיקה ---
+        // שימו לב: מחקתי את החסימה של הגלילה ב-JS כי ה-CSS מטפל בזה עכשיו
+
         const questions = [
             { n1: 111,  op: '×', n2: 14,  ans: 1554 },
             { n1: 12,  op: '×', n2: 810,  ans: 9720 },
@@ -378,7 +353,9 @@
                 `<span>${q.n1}</span> <span>${q.op}</span> <span>${q.n2}</span>`;
             document.getElementById('answer-input').value = '';
             document.getElementById('error-box').style.display = 'none';
-            document.getElementById('answer-input').focus();
+            
+            // פוקוס אוטומטי - לפעמים גורם לקפיצה, אפשר לבטל אם זה מפריע
+            // document.getElementById('answer-input').focus();
         }
 
         function checkAnswer() {
@@ -416,6 +393,17 @@
         function moreConfetti() {
             confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#E52521', '#43B047', '#FFD700', '#0099ff'] });
         }
+        
+        // תיקון סופי למקלדת באנדרואיד/אייפון:
+        // כשהחלון משנה גודל (בגלל מקלדת), נגלול את האינפוט למרכז
+        window.addEventListener('resize', () => {
+            if(document.activeElement.tagName === 'INPUT') {
+                setTimeout(() => {
+                    document.activeElement.scrollIntoView({behavior: 'smooth', block: 'center'});
+                }, 100);
+            }
+        });
+
     </script>
 </body>
 </html>
