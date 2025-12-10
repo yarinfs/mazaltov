@@ -16,111 +16,230 @@
             --coin-gold: #FFD700;
             --dirt-base: #5c3c20;
             --bg-panel: #ffffff;
+            /* Dynamic viewport height - updated by JS */
+            --app-height: 100%;
         }
 
-        /* --- CRITICAL IOS FIXES START --- */
-        html, body {
-            margin: 0; padding: 0;
-            width: 100%; height: 100%;
-            /* Lock the body completely to stop the bounce/black gap */
-            overflow: hidden; 
-            position: fixed; 
+        /* ═══════════════════════════════════════════════════════════
+           CRITICAL iOS FIX: Lock everything in place
+           ═══════════════════════════════════════════════════════════ */
+        html {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
             overscroll-behavior: none;
             background-color: #000;
-            font-family: 'Rubik', sans-serif;
         }
 
-        /* This wrapper replaces the body's centering role */
-        #viewport-wrapper {
+        body {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            height: 100%; /* Will be updated by JS */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            overflow-y: auto; /* Internal scroll if needed */
-            -webkit-overflow-scrolling: touch;
-            position: absolute;
-            top: 0; left: 0;
-            z-index: 10;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            overscroll-behavior: none;
+            font-family: 'Rubik', sans-serif;
+            /* Prevent iOS rubber-banding */
+            -webkit-overflow-scrolling: auto;
         }
-        /* --- CRITICAL IOS FIXES END --- */
 
         * {
             box-sizing: border-box;
             user-select: none;
+            -webkit-user-select: none;
             -webkit-tap-highlight-color: transparent;
+            /* Prevent text selection on long press */
+            -webkit-touch-callout: none;
         }
 
-        /* Background Video - Fixed behind everything */
+        /* ═══════════════════════════════════════════════════════════
+           APP WRAPPER: The magic container that resizes with keyboard
+           ═══════════════════════════════════════════════════════════ */
+        .app-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            /* This height is controlled by JavaScript */
+            height: var(--app-height);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            /* Smooth transition when keyboard opens/closes */
+            transition: height 0.15s ease-out;
+            /* Prevent any touch scrolling */
+            touch-action: none;
+        }
+
+        /* When keyboard is active, align content to top with padding */
+        .app-wrapper.keyboard-open {
+            align-items: flex-start;
+            padding-top: 15px;
+            padding-bottom: 10px;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           BACKGROUND ELEMENTS
+           ═══════════════════════════════════════════════════════════ */
         #bg-video {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            object-fit: cover; z-index: -10;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -10;
             pointer-events: none;
         }
 
         .scanlines {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
-            background-size: 100% 4px; pointer-events: none; z-index: 100;
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 100;
         }
         
         .overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5); z-index: -5;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: -5;
+            pointer-events: none;
         }
 
-        /* --- Game Panel Tweaks --- */
+        /* ═══════════════════════════════════════════════════════════
+           GAME PANEL: Flexible, scrollable content box
+           ═══════════════════════════════════════════════════════════ */
         .game-panel {
             background-color: var(--bg-panel);
             width: 90%; 
             max-width: 400px;
-            /* Ensure panel doesn't get cut off on small screens */
-            max-height: 95%; 
-            display: none;
-            flex-direction: column; /* Ensure content flows vertically */
+            /* Maximum height with room for shadows */
+            max-height: calc(100% - 30px);
             padding: 20px;
             text-align: center; 
+            position: relative; 
+            display: none;
+            flex-direction: column;
             border: 4px solid black;
             border-radius: 15px;
             box-shadow: 10px 10px 0px rgba(0,0,0,0.6);
             z-index: 200;
-            position: relative;
-            /* Allow the panel itself to scroll if the keyboard makes screen tiny */
-            overflow-y: auto; 
+            /* Allow internal scrolling if content overflows */
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+        }
+
+        /* Compact mode when keyboard is open */
+        .keyboard-open .game-panel {
+            padding: 15px;
+            max-height: calc(100% - 20px);
         }
 
         .active { 
-            display: block; 
+            display: flex;
             animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
         }
         
-        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes popIn { 
+            0% { transform: scale(0.8); opacity: 0; } 
+            100% { transform: scale(1); opacity: 1; } 
+        }
 
+        /* ═══════════════════════════════════════════════════════════
+           UI COMPONENTS
+           ═══════════════════════════════════════════════════════════ */
         h1 {
-            font-weight: 900; font-size: 1.8rem; margin: 0 0 10px 0; color: var(--mario-red);
-            text-shadow: 2px 2px 0 #000; -webkit-text-stroke: 1px black;
-            flex-shrink: 0; /* Title won't shrink */
+            font-weight: 900;
+            font-size: 1.8rem;
+            margin: 0 0 10px 0;
+            color: var(--mario-red);
+            text-shadow: 2px 2px 0 #000;
+            -webkit-text-stroke: 1px black;
+            flex-shrink: 0;
         }
         
         .intro-text {
-            font-weight: 700; font-size: 1rem; color: #333; margin-bottom: 20px; line-height: 1.4;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 20px;
+            line-height: 1.4;
+            flex-shrink: 0;
+        }
+
+        /* Compact text when keyboard is open */
+        .keyboard-open .intro-text {
+            font-size: 0.9rem;
+            margin-bottom: 15px;
         }
 
         .hud-container {
-            display: flex; justify-content: space-between; align-items: center;
-            background: var(--pipe-green); padding: 8px 12px; border-radius: 10px;
-            margin-bottom: 15px; border: 3px solid #000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--pipe-green);
+            padding: 8px 12px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border: 3px solid #000;
             box-shadow: inset 0 4px 0 rgba(255,255,255,0.3), inset 0 -4px 0 rgba(0,0,0,0.2);
             flex-shrink: 0;
         }
-        .hud-item {
-            color: white; font-size: 0.9rem; font-weight: bold;
-            display: flex; flex-direction: column; align-items: center; text-shadow: 1px 1px 0 #000;
+
+        .keyboard-open .hud-container {
+            padding: 6px 10px;
+            margin-bottom: 8px;
         }
-        .timer-text { font-size: 1.6rem; color: #fff; text-shadow: 2px 2px 0 #000; font-weight: 900; line-height: 1; }
-        .timer-label { font-size: 0.7rem; color: #e0ffd4; margin-bottom: 2px; }
+
+        .hud-item {
+            color: white;
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .timer-text {
+            font-size: 1.6rem;
+            color: #fff;
+            text-shadow: 2px 2px 0 #000;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .timer-label {
+            font-size: 0.7rem;
+            color: #e0ffd4;
+            margin-bottom: 2px;
+        }
+
+        .question-label {
+            margin: 0 0 5px 0;
+            font-weight: bold;
+            color: #555;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
 
         .math-block {
             background-color: var(--dirt-base);
@@ -128,72 +247,180 @@
                 linear-gradient(45deg, rgba(0,0,0,0.2) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.2) 75%),
                 linear-gradient(135deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.1) 75%);
             background-size: 20px 20px;
-            border: 4px solid #000; padding: 15px; margin: 10px 0;
-            color: #fff; font-size: 2.5rem; font-weight: 900; 
-            text-shadow: 3px 3px 0 #000; -webkit-text-stroke: 2px black;
-            direction: ltr; display: flex; justify-content: center; align-items: center; gap: 10px;
+            border: 4px solid #000;
+            padding: 15px;
+            margin: 8px 0;
+            color: #fff;
+            font-size: 2.2rem;
+            font-weight: 900; 
+            text-shadow: 3px 3px 0 #000;
+            -webkit-text-stroke: 2px black;
+            direction: ltr;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
             flex-shrink: 0;
         }
 
-        .btn {
-            background-color: var(--pipe-green); color: white;
-            font-family: 'Rubik', sans-serif; font-weight: 900; font-size: 1.3rem;
-            padding: 12px 0; width: 100%; border: 3px solid #000; border-radius: 10px;
-            cursor: pointer; margin-top: 10px; box-shadow: 0 5px 0 var(--pipe-dark);
-            transition: all 0.1s; touch-action: manipulation;
-            flex-shrink: 0;
+        .keyboard-open .math-block {
+            padding: 10px;
+            font-size: 1.8rem;
+            margin: 5px 0;
         }
-        .btn:active { transform: translateY(5px); box-shadow: 0 0 0 var(--pipe-dark); }
-        .btn-start { background-color: var(--mario-red); box-shadow: 0 5px 0 #8a0000; }
-        .btn-start:active { box-shadow: 0 0 0 #8a0000; }
-        .btn:disabled { background-color: #999; box-shadow: 0 5px 0 #666; cursor: wait; }
+
+        .btn {
+            background-color: var(--pipe-green);
+            color: white;
+            font-family: 'Rubik', sans-serif;
+            font-weight: 900;
+            font-size: 1.3rem;
+            padding: 12px 0;
+            width: 100%;
+            border: 3px solid #000;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 5px 0 var(--pipe-dark);
+            transition: transform 0.1s, box-shadow 0.1s;
+            touch-action: manipulation;
+            flex-shrink: 0;
+            /* Prevent iOS button styling */
+            -webkit-appearance: none;
+        }
+
+        .btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 0 0 var(--pipe-dark);
+        }
+
+        .btn-start {
+            background-color: var(--mario-red);
+            box-shadow: 0 5px 0 #8a0000;
+        }
+
+        .btn-start:active {
+            box-shadow: 0 0 0 #8a0000;
+        }
+
+        .btn:disabled {
+            background-color: #999;
+            box-shadow: 0 5px 0 #666;
+            cursor: wait;
+        }
+
+        .keyboard-open .btn {
+            padding: 10px 0;
+            font-size: 1.1rem;
+            margin-top: 8px;
+        }
 
         input[type="tel"] {
-            width: 100%; padding: 10px; font-family: 'Rubik', sans-serif; font-weight: 900;
-            font-size: 1.8rem; text-align: center; border: 3px solid #000; border-radius: 10px;
-            background: #fff; margin-bottom: 10px; outline: none;
+            width: 100%;
+            padding: 12px;
+            font-family: 'Rubik', sans-serif;
+            font-weight: 900;
+            font-size: 1.8rem;
+            text-align: center;
+            border: 3px solid #000;
+            border-radius: 10px;
+            background: #fff;
+            margin-bottom: 8px;
+            outline: none;
             flex-shrink: 0;
+            /* iOS input fixes */
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input[type="tel"]:focus {
+            border-color: var(--mario-red);
+            box-shadow: 0 0 0 3px rgba(229, 37, 33, 0.3);
+        }
+
+        .keyboard-open input[type="tel"] {
+            padding: 10px;
+            font-size: 1.5rem;
         }
 
         .error-msg { 
-            background-color: #ffcccc; color: var(--mario-red); border: 3px solid var(--mario-red);
-            border-radius: 8px; font-weight: 900; padding: 8px; display: none; margin-bottom: 10px;
-            font-size: 1rem; animation: shake 0.4s;
+            background-color: #ffcccc;
+            color: var(--mario-red);
+            border: 3px solid var(--mario-red);
+            border-radius: 8px;
+            font-weight: 900;
+            padding: 8px;
+            display: none;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            animation: shake 0.4s;
+            flex-shrink: 0;
         }
 
-        .win-title { color: var(--coin-gold); -webkit-text-stroke: 1.5px black; text-shadow: 3px 3px 0 #000; animation: winZoom 1s infinite alternate; }
-        .note { background: #fff8dc; border: 3px dashed var(--coin-gold); padding: 12px; font-size: 1rem; line-height: 1.4; border-radius: 10px; margin-bottom: 15px; font-weight: bold; }
+        .win-title {
+            color: var(--coin-gold);
+            -webkit-text-stroke: 1.5px black;
+            text-shadow: 3px 3px 0 #000;
+            animation: winZoom 1s infinite alternate;
+        }
 
-        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 100% { transform: translateX(0); } }
-        @keyframes winZoom { from { transform: scale(1); } to { transform: scale(1.1); } }
-        .fail-screen { background: #220000; border: 4px solid var(--mario-red); }
-        .fail-text { color: var(--mario-red); font-size: 2.2rem; text-shadow: 2px 2px 0 #000; }
-        
-        .spacer { height: 20px; flex-shrink: 0; }
-        
+        .note {
+            background: #fff8dc;
+            border: 3px dashed var(--coin-gold);
+            padding: 12px;
+            font-size: 1rem;
+            line-height: 1.4;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @keyframes winZoom {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+
+        .fail-screen {
+            background: #220000;
+            border: 4px solid var(--mario-red);
+        }
+
+        .fail-text {
+            color: var(--mario-red);
+            font-size: 2.2rem;
+            text-shadow: 2px 2px 0 #000;
+        }
     </style>
 </head>
 <body>
-
     <div class="scanlines"></div>
-    <video id="bg-video" autoplay muted loop playsinline webkit-playsinline><source src="background.mp4" type="video/mp4"></video>
+    <video id="bg-video" autoplay muted loop playsinline webkit-playsinline>
+        <source src="background.mp4" type="video/mp4">
+    </video>
     <div class="overlay"></div>
 
-    <!-- WRAPPER: Handles centering and sizing logic for iOS -->
-    <div id="viewport-wrapper">
-
-        <!-- Stage 1: Intro -->
+    <!-- Main App Wrapper - Height controlled by JavaScript -->
+    <div class="app-wrapper" id="app-wrapper">
+        
+        <!-- שלב 1: פתיחה -->
         <div id="screen-1" class="game-panel active">
             <h1>תעצור! 🛑</h1>
             <p class="intro-text">
                 לפני שמתחילים אני צריך לבדוק אם אתה באמת אבא שלי.
                 בשביל זה הכנתי לך מבחן בחשבון שבו אתה צריך להראות את המהירות שלך!
             </p>
-            <button class="btn btn-start" id="init-game-btn" disabled>טוען...</button>
+            <button class="btn btn-start" id="init-game-btn" disabled>טוען סאונד...</button>
         </div>
 
-        <!-- Stage 2: Game -->
+        <!-- שלב 2: משחק -->
         <div id="screen-2" class="game-panel">
             <div class="hud-container">
                 <div class="hud-item">
@@ -206,18 +433,17 @@
                 </div>
             </div>
 
-            <p style="margin: 0; font-weight: bold; color: #555;">תפתור את התרגיל:</p>
+            <p class="question-label">תפתור את התרגיל:</p>
             <div id="question-display" class="math-block"></div>
             
             <input type="tel" id="answer-input" placeholder="?" autocomplete="off" inputmode="numeric">
             
             <div id="error-box" class="error-msg">טעות! ירד לך לב! 💔</div>
             
-            <button class="btn" onclick="checkAnswer()">בדיקה</button>
-            <div class="spacer"></div> <!-- Spacer for scrolling -->
+            <button class="btn" id="check-btn">בדיקה</button>
         </div>
 
-        <!-- Stage 3: Win -->
+        <!-- שלב 3: ניצחון -->
         <div id="screen-3" class="game-panel">
             <h1 class="win-title">מזל טוב! 👑</h1>
             <div class="note">
@@ -226,22 +452,162 @@
                 המון מזל טוב ליום ההולדת. אתה האבא הכי טוב שיכולתי לבקש אתה תמיד שם בשבילי ובשביל מעיין <br>
                 אוהב אותך מלא מזל טוב! ❤️ 
             </div>
-            <button class="btn btn-start" onclick="moreConfetti()">תלחץ לעוד קונפטי!</button>
+            <button class="btn btn-start" id="confetti-btn">תלחץ לעוד קונפטי!</button>
         </div>
 
-        <!-- Stage 4: Fail -->
+        <!-- שלב 4: הפסד -->
         <div id="screen-fail" class="game-panel fail-screen">
             <h1 class="fail-text">גיים אובר!</h1>
             <p id="fail-reason" style="color: white; font-weight: bold; font-size: 1.2rem;">הזמן נגמר...</p>
             <h2 style="color: #ffaaaa; margin-top: 20px;">אתה לא אבא שלי! 😡</h2>
-            <button class="btn" onclick="location.reload()">נסה שוב</button>
+            <button class="btn" id="retry-btn">נסה שוב</button>
         </div>
-
-    </div> 
-    <!-- WRAPPER END -->
+    </div>
 
     <script>
-        // --- Sound System (FIXED to prevent hanging) ---
+        // ═══════════════════════════════════════════════════════════════════
+        // iOS KEYBOARD FIX - Using Visual Viewport API
+        // ═══════════════════════════════════════════════════════════════════
+        
+        const appWrapper = document.getElementById('app-wrapper');
+        const inputField = document.getElementById('answer-input');
+        let isKeyboardOpen = false;
+        let initialHeight = window.innerHeight;
+        
+        // Update the app height based on available viewport
+        function setAppHeight() {
+            // Use visualViewport API for iOS (most reliable)
+            const vh = window.visualViewport 
+                ? window.visualViewport.height 
+                : window.innerHeight;
+            
+            // Set CSS variable
+            document.documentElement.style.setProperty('--app-height', `${vh}px`);
+            
+            // Detect if keyboard is likely open (height reduced significantly)
+            const heightReduction = initialHeight - vh;
+            const keyboardLikelyOpen = heightReduction > 100;
+            
+            if (keyboardLikelyOpen && !isKeyboardOpen) {
+                isKeyboardOpen = true;
+                appWrapper.classList.add('keyboard-open');
+            } else if (!keyboardLikelyOpen && isKeyboardOpen) {
+                isKeyboardOpen = false;
+                appWrapper.classList.remove('keyboard-open');
+            }
+        }
+
+        // Initial setup
+        setAppHeight();
+        
+        // Listen to Visual Viewport changes (iOS 13+)
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', setAppHeight);
+            
+            // Prevent viewport from scrolling when keyboard appears
+            window.visualViewport.addEventListener('scroll', (e) => {
+                // Force scroll position to top
+                if (window.visualViewport.offsetTop > 0) {
+                    window.scrollTo(0, 0);
+                }
+            });
+        }
+        
+        // Fallback for older browsers
+        window.addEventListener('resize', () => {
+            // Update initial height when orientation changes
+            if (!isKeyboardOpen) {
+                initialHeight = window.innerHeight;
+            }
+            setAppHeight();
+        });
+        
+        // Handle orientation change
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                initialHeight = window.innerHeight;
+                setAppHeight();
+            }, 100);
+        });
+
+        // ═══════════════════════════════════════════════════════════════════
+        // PREVENT ALL UNWANTED SCROLLING
+        // ═══════════════════════════════════════════════════════════════════
+        
+        // Prevent touchmove on the wrapper (but allow on scrollable panels)
+        appWrapper.addEventListener('touchmove', function(e) {
+            const target = e.target;
+            const panel = target.closest('.game-panel');
+            
+            // If we're inside a panel and it's scrollable, allow it
+            if (panel && panel.scrollHeight > panel.clientHeight) {
+                const isAtTop = panel.scrollTop === 0;
+                const isAtBottom = panel.scrollTop + panel.clientHeight >= panel.scrollHeight;
+                
+                // Determine scroll direction
+                const touch = e.touches[0];
+                const lastY = panel.dataset.lastY ? parseFloat(panel.dataset.lastY) : touch.clientY;
+                const deltaY = touch.clientY - lastY;
+                panel.dataset.lastY = touch.clientY;
+                
+                // Prevent overscroll at boundaries
+                if ((isAtTop && deltaY > 0) || (isAtBottom && deltaY < 0)) {
+                    e.preventDefault();
+                }
+                return;
+            }
+            
+            // Prevent scroll on everything else
+            e.preventDefault();
+        }, { passive: false });
+        
+        // Reset lastY on touch start
+        appWrapper.addEventListener('touchstart', function(e) {
+            const panel = e.target.closest('.game-panel');
+            if (panel) {
+                panel.dataset.lastY = e.touches[0].clientY;
+            }
+        }, { passive: true });
+
+        // Prevent elastic scroll on document
+        document.addEventListener('touchmove', function(e) {
+            if (!e.target.closest('.game-panel')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // ═══════════════════════════════════════════════════════════════════
+        // INPUT FOCUS HANDLING
+        // ═══════════════════════════════════════════════════════════════════
+        
+        inputField.addEventListener('focus', () => {
+            // Delay to allow keyboard to fully open
+            setTimeout(setAppHeight, 100);
+            setTimeout(setAppHeight, 300);
+            setTimeout(setAppHeight, 500);
+        });
+
+        inputField.addEventListener('blur', () => {
+            // Delay to allow keyboard to close
+            setTimeout(() => {
+                isKeyboardOpen = false;
+                appWrapper.classList.remove('keyboard-open');
+                setAppHeight();
+            }, 100);
+        });
+
+        // Handle Enter key
+        inputField.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                checkAnswer();
+            }
+        });
+
+        // ═══════════════════════════════════════════════════════════════════
+        // AUDIO SYSTEM
+        // ═══════════════════════════════════════════════════════════════════
+        
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const soundBuffers = {};
         let bgSource = null;
@@ -255,28 +621,17 @@
         async function loadSound(name, url) {
             try {
                 const response = await fetch(url);
-                if (!response.ok) throw new Error("File not found");
                 const arrayBuffer = await response.arrayBuffer();
                 const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
                 soundBuffers[name] = audioBuffer;
             } catch (error) {
-                // We log the error but don't stop the game
-                console.warn(`Sound ${name} failed to load. The game will play without it.`);
+                console.error(`Failed to load sound ${name}:`, error);
             }
         }
 
         async function initAudio() {
-            // Load sounds, but do not wait forever
-            const loadPromises = Promise.all(
-                Object.entries(audioFiles).map(([name, url]) => loadSound(name, url))
-            );
-
-            // Force the game to start after 2 seconds even if sounds fail
-            const timeoutPromise = new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Wait for whichever comes first: loading done, or 2 seconds passed
-            await Promise.race([loadPromises, timeoutPromise]);
-            
+            const promises = Object.entries(audioFiles).map(([name, url]) => loadSound(name, url));
+            await Promise.all(promises);
             const btn = document.getElementById('init-game-btn');
             btn.innerText = "יאללה למבחן";
             btn.disabled = false;
@@ -284,8 +639,7 @@
         initAudio();
 
         function playSound(name, loop = false, volume = 1.0) {
-            if (!soundBuffers[name]) return; // If sound failed to load, just return
-            
+            if (!soundBuffers[name]) return;
             if (name === 'bg' && bgSource) {
                 try { bgSource.stop(); } catch(e){}
             }
@@ -307,7 +661,9 @@
             }
         }
 
-        // --- Game Logic ---
+        // ═══════════════════════════════════════════════════════════════════
+        // GAME LOGIC
+        // ═══════════════════════════════════════════════════════════════════
 
         const questions = [
             { n1: 111,  op: '×', n2: 14,  ans: 1554 },
@@ -321,10 +677,15 @@
         let lives = 3;
         let timerInterval;
 
+        // Event Listeners
         document.getElementById('init-game-btn').addEventListener('click', function() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             startGame();
         });
+
+        document.getElementById('check-btn').addEventListener('click', checkAnswer);
+        document.getElementById('confetti-btn').addEventListener('click', moreConfetti);
+        document.getElementById('retry-btn').addEventListener('click', () => location.reload());
 
         function startGame() {
             playSound('bg', true, 0.5);
@@ -339,8 +700,12 @@
             timerInterval = setInterval(function() {
                 timeLeft--;
                 document.getElementById('time-left').innerText = timeLeft;
-                if (timeLeft <= 10) document.getElementById('time-left').style.color = '#ffcccb';
-                if (timeLeft <= 0) gameOver("נגמר הזמן!");
+                if (timeLeft <= 10) {
+                    document.getElementById('time-left').style.color = '#ffcccb';
+                }
+                if (timeLeft <= 0) {
+                    gameOver("נגמר הזמן!");
+                }
             }, 1000);
         }
 
@@ -371,6 +736,7 @@
         function checkAnswer() {
             const val = document.getElementById('answer-input').value;
             if(val === "") return;
+            
             const correct = questions[currentQ].ans;
 
             if (parseInt(val) === correct) {
@@ -383,7 +749,33 @@
             } else {
                 lives--;
                 updateLives();
-                const err = document.getElementById('error-box');
-                err.style.display = 'block';
+                document.getElementById('error-box').style.display = 'block';
+                document.getElementById('answer-input').value = '';
                 if (navigator.vibrate) navigator.vibrate(200);
-                if (lives === 0) game
+                if (lives === 0) gameOver("נגמרו החיים!");
+            }
+        }
+
+        function finishGame() {
+            clearInterval(timerInterval);
+            stopBackgroundMusic();
+            playSound('win', false, 1.0);
+            document.getElementById('screen-2').classList.remove('active');
+            document.getElementById('screen-3').classList.add('active');
+            // Blur input to close keyboard
+            inputField.blur();
+            moreConfetti();
+            setInterval(moreConfetti, 2500);
+        }
+
+        function moreConfetti() {
+            confetti({ 
+                particleCount: 100, 
+                spread: 70, 
+                origin: { y: 0.6 }, 
+                colors: ['#E52521', '#43B047', '#FFD700', '#0099ff'] 
+            });
+        }
+    </script>
+</body>
+</html>
