@@ -2,7 +2,6 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <!-- הגדרה קריטית לאייפון למניעת זום וגלילה -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>יום הולדת לאבא!</title>
     
@@ -19,16 +18,15 @@
             --bg-panel: #ffffff;
         }
 
-        /* איפוס מוחלט וביטול גלילה */
         html, body {
             margin: 0; padding: 0;
             width: 100%; height: 100%;
-            overflow: hidden; /* חוסם גלילה */
-            position: fixed; /* נועל את המסך */
+            overflow: hidden;
+            position: fixed;
             font-family: 'Rubik', sans-serif;
             display: flex; align-items: center; justify-content: center;
             background: #000;
-            touch-action: none; /* מבטל מחוות מגע של הדפדפן */
+            touch-action: none;
         }
 
         * {
@@ -37,7 +35,6 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* וידאו רקע */
         #bg-video {
             position: absolute; top: 0; left: 0;
             width: 100%; height: 100%;
@@ -53,11 +50,9 @@
             background: rgba(0, 0, 0, 0.5); z-index: -5;
         }
 
-        /* קופסה ראשית */
         .game-panel {
             background-color: var(--bg-panel);
             width: 90%; max-width: 400px;
-            /* התאמה למסכים קטנים עם מקלדת */
             max-height: 85vh; 
             overflow-y: auto; 
             padding: 20px;
@@ -80,7 +75,6 @@
             font-weight: 700; font-size: 1.1rem; color: #333; margin-bottom: 20px; line-height: 1.4;
         }
 
-        /* HUD */
         .hud-container {
             display: flex; justify-content: space-between; align-items: center;
             background: var(--pipe-green); padding: 8px 12px; border-radius: 10px;
@@ -96,7 +90,6 @@
         }
         .timer-label { font-size: 0.7rem; color: #e0ffd4; margin-bottom: 2px; }
 
-        /* Block */
         .math-block {
             background-color: var(--dirt-base);
             background-image:
@@ -116,12 +109,14 @@
             padding: 12px 0; width: 100%; border: 3px solid #000; border-radius: 10px;
             cursor: pointer; margin-top: 10px; box-shadow: 0 5px 0 var(--pipe-dark);
             transition: all 0.1s;
-            /* חשוב לאייפון - מבטל זום בלחיצה כפולה */
             touch-action: manipulation;
         }
         .btn:active { transform: translateY(5px); box-shadow: 0 0 0 var(--pipe-dark); }
         .btn-start { background-color: var(--mario-red); box-shadow: 0 5px 0 #8a0000; }
         .btn-start:active { box-shadow: 0 0 0 #8a0000; }
+        
+        /* כפתור אפור כשטוען */
+        .btn:disabled { background-color: #999; box-shadow: 0 5px 0 #666; cursor: wait; }
 
         input[type="tel"] {
             width: 100%; padding: 10px; font-family: 'Rubik', sans-serif; font-weight: 900;
@@ -147,19 +142,13 @@
 </head>
 <body>
 
-    <!-- שכבת מגן שקופה למניעת גלילה -->
     <div style="position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1;"></div>
 
     <div class="scanlines"></div>
-    <!-- הוספנו playsinline לווידאו כדי שלא יפתח במסך מלא באייפון -->
     <video id="bg-video" autoplay muted loop playsinline webkit-playsinline><source src="background.mp4" type="video/mp4"></video>
     <div class="overlay"></div>
 
-    <!-- הגדרות אודיו מיוחדות לאייפון -->
-    <!-- הוספנו playsinline ו-preload כדי לעזור לדפדפן לטעון אותם מראש -->
-    <audio id="bg-music" loop preload="auto" playsinline webkit-playsinline><source src="sound.mp3" type="audio/mpeg"></audio>
-    <audio id="win-music" preload="auto" playsinline webkit-playsinline><source src="sound2.mp4" type="audio/mp4"></audio>
-    <audio id="fail-music" preload="auto" playsinline webkit-playsinline><source src="sound3.mp4" type="audio/mp4"></audio>
+    <!-- אין כאן תגיות אודיו יותר - הכל מנוהל ב-JAVASCRIPT -->
 
     <!-- שלב 1: פתיחה -->
     <div id="screen-1" class="game-panel active">
@@ -168,8 +157,8 @@
             לפני שמתחילים אני צריך לבדוק אם אתה באמת אבא שלי.
             בשביל זה הכנתי לך מבחן בחשבון שבו אתה צריך להראות את המהירות שלך!
         </p>
-        <!-- כפתור עם מזהה ייחודי לטיפול באירוע לחיצה -->
-        <button class="btn btn-start" id="init-game-btn">יאללה למבחן</button>
+        <!-- הכפתור מנוטרל עד שהסאונד נטען -->
+        <button class="btn btn-start" id="init-game-btn" disabled>טוען סאונד...</button>
     </div>
 
     <!-- שלב 2: משחק -->
@@ -188,7 +177,6 @@
         <p style="margin: 0; font-weight: bold; color: #555;">תפתור את התרגיל:</p>
         <div id="question-display" class="math-block"></div>
         
-        <!-- מקלדת מספרית נוחה -->
         <input type="tel" id="answer-input" placeholder="?" autocomplete="off" inputmode="numeric">
         
         <div id="error-box" class="error-msg">טעות! ירד לך לב! 💔</div>
@@ -217,56 +205,87 @@
     </div>
 
     <script>
-        // --- ניהול אודיו מתקדם לאייפון ---
-        const audioElements = {
-            bg: document.getElementById('bg-music'),
-            win: document.getElementById('win-music'),
-            fail: document.getElementById('fail-music')
+        // --- מערכת סאונד אולטימטיבית לאייפון (Web Audio API) ---
+        // המערכת הזאת עוקפת את כפתור ה-Mute ומנגנת קבצים ישירות מהזיכרון
+        
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const soundBuffers = {};
+        let bgSource = null; // משתנה לשמירת המוזיקה המתנגנת ברקע
+
+        // רשימת הקבצים שלך - שים לב לשמות בדיוק כמו בתמונה
+        const audioFiles = {
+            'bg': 'sound.mp3',
+            'win': 'sound2.mp4',  // כן, זה MP4 אבל אנחנו נחלץ ממנו רק אודיו
+            'fail': 'sound3.mp4'
         };
 
-        // הקמת AudioContext (עוזר לעקוף חסימות באייפון)
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        const audioCtx = new AudioContext();
-
-        // פונקציה שמפעילה את הסאונד "בכוח" בלחיצה הראשונה
-        function unlockIOSAudio() {
-            // 1. הפעלת ה-Context
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-
-            // 2. מעבר על כל הקבצים וניגון שקט שלהם
-            // זה "טוען" אותם לזיכרון של האייפון ומאשר ניגון עתידי
-            Object.values(audioElements).forEach(audio => {
-                audio.muted = true; // משתיקים לרגע כדי שלא ישמעו את ה"חימום"
-                audio.play().then(() => {
-                    // ברגע שהתחיל לנגן, עוצרים ומחזירים להתחלה
-                    audio.pause();
-                    audio.currentTime = 0;
-                    audio.muted = false; // מחזירים ווליום למצב רגיל
-                }).catch(err => console.log("Audio unlock fail:", err));
-            });
-        }
-
-        function playSound(type) {
-            // עצירת כל הסאונדים האחרים
-            Object.values(audioElements).forEach(s => {
-                s.pause();
-                s.currentTime = 0;
-            });
-
-            // ניגון הסאונד הרצוי
-            const target = audioElements[type];
-            if (target) {
-                target.volume = (type === 'bg') ? 0.4 : 1.0;
-                target.play().catch(e => console.log("Play error:", e));
+        // פונקציה לטעינת סאונד מהרשת ופענוח לזיכרון
+        async function loadSound(name, url) {
+            try {
+                const response = await fetch(url);
+                const arrayBuffer = await response.arrayBuffer();
+                const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                soundBuffers[name] = audioBuffer;
+                console.log(`Sound loaded: ${name}`);
+            } catch (error) {
+                console.error(`Failed to load sound ${name}:`, error);
             }
         }
 
+        // טעינת כל הסאונדים בהתחלה
+        async function initAudio() {
+            const promises = Object.entries(audioFiles).map(([name, url]) => loadSound(name, url));
+            await Promise.all(promises);
+            
+            // כשהכל טעון, משחררים את הכפתור
+            const btn = document.getElementById('init-game-btn');
+            btn.innerText = "יאללה למבחן";
+            btn.disabled = false;
+        }
+
+        // קריאה לפונקציית הטעינה
+        initAudio();
+
+        // פונקציה לניגון סאונד
+        function playSound(name, loop = false, volume = 1.0) {
+            if (!soundBuffers[name]) return;
+
+            // אם זה מוזיקת רקע, עוצרים קודם אם כבר מתנגן
+            if (name === 'bg' && bgSource) {
+                try { bgSource.stop(); } catch(e){}
+            }
+
+            // יצירת מקור סאונד חדש
+            const source = audioCtx.createBufferSource();
+            source.buffer = soundBuffers[name];
+            source.loop = loop;
+
+            // שליטה בווליום
+            const gainNode = audioCtx.createGain();
+            gainNode.gain.value = volume;
+
+            // חיבורים: מקור -> ווליום -> רמקולים
+            source.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            source.start(0);
+
+            // שמירת הרפרנס אם זה רקע כדי שנוכל לעצור אחר כך
+            if (name === 'bg') {
+                bgSource = source;
+            }
+        }
+
+        function stopBackgroundMusic() {
+            if (bgSource) {
+                try { bgSource.stop(); } catch(e){}
+                bgSource = null;
+            }
+        }
 
         // --- לוגיקת משחק ---
         
-        // מניעת גלילה אגרסיבית (במיוחד לאייפון)
+        // מניעת גלילה לאייפון
         document.body.addEventListener('touchmove', function(e) {
             if (!e.target.closest('.game-panel')) {
                 e.preventDefault();
@@ -285,18 +304,19 @@
         let lives = 3;
         let timerInterval;
 
-        // אירוע לחיצה על כפתור התחלה - כאן קורה הקסם של הסאונד
+        // התחלת המשחק
         document.getElementById('init-game-btn').addEventListener('click', function() {
-            unlockIOSAudio(); // שחרור נעילת סאונד של אייפון
-            
-            // השהייה קטנה של 100 מילישניות כדי לוודא שהסאונד "שוחרר"
-            setTimeout(() => {
-                startGame();
-            }, 100);
+            // פעולה קריטית לאייפון: שחרור מנוע האודיו בלחיצה הראשונה
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            startGame();
         });
 
         function startGame() {
-            playSound('bg');
+            // ניגון מוזיקת רקע (ווליום 0.5)
+            playSound('bg', true, 0.5);
 
             document.getElementById('screen-1').classList.remove('active');
             document.getElementById('screen-2').classList.add('active');
@@ -329,13 +349,13 @@
 
         function gameOver(reason) {
             clearInterval(timerInterval);
-            playSound('fail');
+            stopBackgroundMusic(); // עצירת המוזיקה
+            playSound('fail', false, 1.0); // ניגון הפסד
 
             document.getElementById('fail-reason').innerText = reason;
             document.getElementById('screen-2').classList.remove('active');
             document.getElementById('screen-fail').classList.add('active');
             
-            // רטט קצר בטלפון
             if (navigator.vibrate) navigator.vibrate(400);
         }
 
@@ -377,7 +397,8 @@
 
         function finishGame() {
             clearInterval(timerInterval);
-            playSound('win');
+            stopBackgroundMusic(); // עצירת המוזיקה
+            playSound('win', false, 1.0); // ניגון ניצחון
 
             document.getElementById('screen-2').classList.remove('active');
             document.getElementById('screen-3').classList.add('active');
