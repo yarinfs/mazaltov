@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>יום הולדת לאבא!</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --mario-red: #E52521;
+            --pipe-green: #00c300; /* ירוק בהיר */
+            --pipe-dark: #008000;   /* ירוק כהה */
+            --coin-gold: #FFD700;
+            --dirt-base: #5c3c20;   /* חום אדמה */
+            --bg-panel: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Rubik', sans-serif;
+            height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; 
+            color: #000;
+        }
+
+        /* וידאו רקע */
+        #bg-video {
+            position: fixed; right: 0; bottom: 0;
+            min-width: 100%; min-height: 100%;
+            z-index: -10; object-fit: cover; background: #000;
+        }
+        .scanlines {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px; pointer-events: none; z-index: 100;
+        }
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); z-index: -5;
+        }
+
+        /* קופסה ראשית */
+        .game-panel {
+            background-color: var(--bg-panel);
+            width: 90%; max-width: 400px;
+            padding: 25px;
+            text-align: center; position: relative; display: none;
+            border: 4px solid black;
+            border-radius: 15px;
+            box-shadow: 10px 10px 0px rgba(0,0,0,0.6);
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .active { display: block; }
+        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        h1 {
+            font-weight: 900; font-size: 2rem; margin: 0 0 15px 0; color: var(--mario-red);
+            text-shadow: 2px 2px 0 #000;
+            -webkit-text-stroke: 1.5px black;
+        }
+        
+        .intro-text {
+            font-weight: 700; font-size: 1.1rem; color: #333; margin-bottom: 25px; line-height: 1.6;
+        }
+
+        /* --- ה-HUD (תצוגה עליונה) בירוק --- */
+        .hud-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            /* ירוק מריו */
+            background: var(--pipe-green);
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 3px solid #000;
+            /* צל פנימי שנותן נפח */
+            box-shadow: inset 0 4px 0 rgba(255,255,255,0.3), inset 0 -4px 0 rgba(0,0,0,0.2);
+        }
+
+        .hud-item {
+            color: white;
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .timer-text {
+            font-size: 1.8rem;
+            color: #fff; /* לבן על רקע ירוק נראה מעולה */
+            text-shadow: 2px 2px 0 #000;
+            font-weight: 900;
+            line-height: 1;
+        }
+        
+        .timer-label { font-size: 0.7rem; color: #e0ffd4; margin-bottom: 2px; }
+
+        /* --- הבלוק החום המפוקסל (טקסטורה לא אחידה) --- */
+        .math-block {
+            background-color: var(--dirt-base);
+            
+            /* יצירת רעש (Noise) מפוקסל באמצעות גרדיינטים בגדלים שונים */
+            background-image:
+                /* נקודות כהות קטנות */
+                linear-gradient(45deg, rgba(0,0,0,0.2) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.2) 75%),
+                /* נקודות בהירות גדולות יותר */
+                linear-gradient(135deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.1) 75%),
+                /* עוד שכבה לא סדירה */
+                linear-gradient(90deg, transparent 50%, rgba(0,0,0,0.1) 50%);
+            
+            /* הגדלים השונים יוצרים את ה"בלגן" וחוסר האחידות */
+            background-size: 20px 20px, 34px 34px, 12px 12px;
+            background-position: 0 0, 5px 5px, 10px 0;
+            
+            border: 4px solid #000; 
+            padding: 25px; 
+            margin: 20px 0;
+            color: #fff; 
+            font-size: 2.8rem; 
+            font-weight: 900; 
+            text-shadow: 4px 4px 0 #000;
+            -webkit-text-stroke: 2px black;
+            direction: ltr; display: flex; justify-content: center; align-items: center; gap: 10px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.6); /* עומק */
+        }
+
+        .btn {
+            background-color: var(--pipe-green); color: white;
+            font-family: 'Rubik', sans-serif; font-weight: 900; font-size: 1.4rem;
+            padding: 15px 0; width: 100%; border: 3px solid #000; border-radius: 10px;
+            cursor: pointer; margin-top: 10px;
+            box-shadow: 0 6px 0 var(--pipe-dark);
+            transition: all 0.1s;
+        }
+        .btn:active { transform: translateY(6px); box-shadow: 0 0 0 var(--pipe-dark); }
+
+        .btn-start { 
+            background-color: var(--mario-red); 
+            box-shadow: 0 6px 0 #8a0000;
+        }
+        .btn-start:active { box-shadow: 0 0 0 #8a0000; }
+
+        input[type="tel"] {
+            width: 100%; padding: 15px; font-family: 'Rubik', sans-serif; font-weight: 900;
+            font-size: 2rem; text-align: center; border: 3px solid #000; border-radius: 10px;
+            background: #fff; margin-bottom: 10px; outline: none;
+        }
+
+        .error-msg { 
+            background-color: #ffcccc; color: var(--mario-red); border: 3px solid var(--mario-red);
+            border-radius: 8px; font-weight: 900; padding: 10px; display: none; margin-bottom: 15px;
+            font-size: 1.1rem; animation: shake 0.4s;
+        }
+
+        .win-title { color: var(--coin-gold); -webkit-text-stroke: 2px black; text-shadow: 4px 4px 0 #000; animation: winZoom 1s infinite alternate; }
+        .note { background: #fff8dc; border: 3px dashed var(--coin-gold); padding: 15px; font-size: 1.1rem; line-height: 1.5; border-radius: 10px; margin-bottom: 20px; font-weight: bold; }
+
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 100% { transform: translateX(0); } }
+        @keyframes winZoom { from { transform: scale(1); } to { transform: scale(1.1); } }
+
+        .fail-screen { background: #220000; border: 4px solid var(--mario-red); }
+        .fail-text { color: var(--mario-red); font-size: 2.5rem; text-shadow: 2px 2px 0 #000; }
+
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+    <video id="bg-video" autoplay muted loop playsinline><source src="background.mp4" type="video/mp4"></video>
+    <div class="overlay"></div>
+
+    <!-- 
+       קבצי הסאונד הם MP4 עכשיו 
+       preload="auto" עוזר לטעון אותם מראש
+    -->
+    <audio id="bg-music" loop preload="auto"><source src="sound.mp3" type="audio/mp4"></audio>
+    <audio id="win-music" preload="auto"><source src="sound2.mp4" type="audio/mp4"></audio>
+    <audio id="fail-music" preload="auto"><source src="sound3.mp4" type="audio/mp4"></audio>
+
+    <!-- שלב 1: פתיחה -->
+    <div id="screen-1" class="game-panel active">
+        <h1>תעצור! 🛑</h1>
+        <p class="intro-text">
+            לפני שמתחילים אני צריך לבדוק אם אתה באמת אבא שלי.
+            בשביל זה הכנתי לך מבחן בחשבון שבו אתה צריך להראות את המהירות שלך!
+        </p>
+        <button class="btn btn-start" onclick="startGame()">יאללה למבחן</button>
+    </div>
+
+    <!-- שלב 2: משחק -->
+    <div id="screen-2" class="game-panel">
+        
+        <!-- ה-HUD הירוק -->
+        <div class="hud-container">
+            <div class="hud-item">
+                <span class="timer-label">זמן</span>
+                <span id="time-left" class="timer-text">60</span>
+            </div>
+            <div class="hud-item">
+                <span class="timer-label">חיים</span>
+                <span id="lives-display" style="font-size: 1.2rem;">❤️❤️❤️</span>
+            </div>
+        </div>
+
+        <p style="margin: 0; font-weight: bold; color: #555;">תפתור את התרגיל:</p>
+
+        <!-- הבלוק החום עם טקסטורה לא אחידה -->
+        <div id="question-display" class="math-block"></div>
+
+        <input type="tel" id="answer-input" placeholder="?" autocomplete="off">
+        
+        <div id="error-box" class="error-msg">טעות! ירד לך לב! 💔</div>
+        
+        <button class="btn" onclick="checkAnswer()">בדיקה</button>
+    </div>
+
+    <!-- שלב 3: ניצחון -->
+    <div id="screen-3" class="game-panel">
+        <h1 class="win-title">מזל טוב! 👑</h1>
+        <div class="note">
+            לאבא הכי טוב בעולם,<br>
+            עברת את המבחן בזמן!<br>
+            המון מזל טוב ליום ההולדת. אתה האבא הכי טוב שיכולתי לבקש אתה תמיד שם בשבילי ובשביל מעיין <br>
+            אוהב אותך מלא מזל טוב! ❤️ 
+        </div>
+        <button class="btn btn-start" onclick="moreConfetti()">תלחץ לעוד קונפטי!</button>
+    </div>
+
+    <!-- שלב 4: הפסד -->
+    <div id="screen-fail" class="game-panel fail-screen">
+        <h1 class="fail-text">גיים אובר!</h1>
+        <p id="fail-reason" style="color: white; font-weight: bold; font-size: 1.2rem;">הזמן נגמר...</p>
+        <h2 style="color: #ffaaaa; margin-top: 20px;">אתה לא אבא שלי! 😡</h2>
+        <button class="btn" onclick="location.reload()">נסה שוב</button>
+    </div>
+
+    <script>
+        const questions = [
+            { n1: 111,  op: '×', n2: 14,  ans: 1554 },
+            { n1: 12,  op: '×', n2: 810,  ans: 9720 },
+            { n1: 8765, op: '-', n2: 1563, ans: 7202 },
+            { n1: 4, op: '-', n2: 2,  ans: 2 }
+        ];
+
+        let currentQ = 0;
+        let timeLeft = 60;
+        let lives = 3;
+        let timerInterval;
+
+        const bgMusic = document.getElementById('bg-music');
+        const winMusic = document.getElementById('win-music');
+        const failMusic = document.getElementById('fail-music');
+
+        function startGame() {
+            // טעינת הסאונד (גם אם זה קבצי mp4)
+            winMusic.play().then(() => { winMusic.pause(); winMusic.currentTime=0; }).catch(()=>{});
+            failMusic.play().then(() => { failMusic.pause(); failMusic.currentTime=0; }).catch(()=>{});
+
+            bgMusic.volume = 0.5;
+            bgMusic.play().catch(e => {
+                console.log("Audio requires interaction");
+            });
+
+            document.getElementById('screen-1').classList.remove('active');
+            document.getElementById('screen-2').classList.add('active');
+            
+            startTimer();
+            loadQuestion();
+            updateLives();
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(function() {
+                timeLeft--;
+                document.getElementById('time-left').innerText = timeLeft;
+
+                if (timeLeft <= 10) {
+                    document.getElementById('time-left').style.color = '#ffcccb'; // אדמדם בהיר על ירוק
+                }
+
+                if (timeLeft <= 0) {
+                    gameOver("נגמר הזמן!");
+                }
+            }, 1000);
+        }
+
+        function updateLives() {
+            let hearts = "";
+            for(let i=0; i<lives; i++) hearts += "❤️";
+            document.getElementById('lives-display').innerText = hearts;
+        }
+
+        function gameOver(reason) {
+            clearInterval(timerInterval);
+            bgMusic.pause();
+            failMusic.volume = 0.8;
+            failMusic.play(); 
+
+            document.getElementById('fail-reason').innerText = reason;
+            document.getElementById('screen-2').classList.remove('active');
+            document.getElementById('screen-fail').classList.add('active');
+        }
+
+        function loadQuestion() {
+            const q = questions[currentQ];
+            document.getElementById('question-display').innerHTML = 
+                `<span>${q.n1}</span> <span>${q.op}</span> <span>${q.n2}</span>`;
+            document.getElementById('answer-input').value = '';
+            document.getElementById('error-box').style.display = 'none';
+            document.getElementById('answer-input').focus();
+        }
+
+        function checkAnswer() {
+            const val = document.getElementById('answer-input').value;
+            const correct = questions[currentQ].ans;
+
+            if (parseInt(val) === correct) {
+                currentQ++;
+                if (currentQ < questions.length) {
+                    loadQuestion();
+                } else {
+                    finishGame();
+                }
+            } else {
+                lives--;
+                updateLives();
+                const err = document.getElementById('error-box');
+                err.style.display = 'block';
+
+                if (lives === 0) {
+                    gameOver("נגמרו החיים!");
+                }
+            }
+        }
+
+        function finishGame() {
+            clearInterval(timerInterval);
+            bgMusic.pause();
+            bgMusic.currentTime = 0;
+            
+            winMusic.volume = 1.0;
+            winMusic.play(); 
+
+            document.getElementById('screen-2').classList.remove('active');
+            document.getElementById('screen-3').classList.add('active');
+            moreConfetti();
+            setInterval(moreConfetti, 2500);
+        }
+
+        function moreConfetti() {
+            confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#E52521', '#43B047', '#FFD700', '#0099ff'], shapes: ['square'] });
+        }
+    </script>
+</body>
+</html>
