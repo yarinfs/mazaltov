@@ -190,7 +190,7 @@
                 לפני שמתחילים אני צריך לבדוק אם אתה באמת אבא שלי.
                 בשביל זה הכנתי לך מבחן בחשבון שבו אתה צריך להראות את המהירות שלך!
             </p>
-            <button class="btn btn-start" id="init-game-btn" disabled>טוען סאונד...</button>
+            <button class="btn btn-start" id="init-game-btn" disabled>טוען...</button>
         </div>
 
         <!-- Stage 2: Game -->
@@ -241,7 +241,7 @@
     <!-- WRAPPER END -->
 
     <script>
-        // --- Sound System ---
+        // --- Sound System (FIXED to prevent hanging) ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const soundBuffers = {};
         let bgSource = null;
@@ -255,17 +255,28 @@
         async function loadSound(name, url) {
             try {
                 const response = await fetch(url);
+                if (!response.ok) throw new Error("File not found");
                 const arrayBuffer = await response.arrayBuffer();
                 const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
                 soundBuffers[name] = audioBuffer;
             } catch (error) {
-                console.error(`Failed to load sound ${name}:`, error);
+                // We log the error but don't stop the game
+                console.warn(`Sound ${name} failed to load. The game will play without it.`);
             }
         }
 
         async function initAudio() {
-            const promises = Object.entries(audioFiles).map(([name, url]) => loadSound(name, url));
-            await Promise.all(promises);
+            // Load sounds, but do not wait forever
+            const loadPromises = Promise.all(
+                Object.entries(audioFiles).map(([name, url]) => loadSound(name, url))
+            );
+
+            // Force the game to start after 2 seconds even if sounds fail
+            const timeoutPromise = new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Wait for whichever comes first: loading done, or 2 seconds passed
+            await Promise.race([loadPromises, timeoutPromise]);
+            
             const btn = document.getElementById('init-game-btn');
             btn.innerText = "יאללה למבחן";
             btn.disabled = false;
@@ -273,7 +284,8 @@
         initAudio();
 
         function playSound(name, loop = false, volume = 1.0) {
-            if (!soundBuffers[name]) return;
+            if (!soundBuffers[name]) return; // If sound failed to load, just return
+            
             if (name === 'bg' && bgSource) {
                 try { bgSource.stop(); } catch(e){}
             }
@@ -374,37 +386,4 @@
                 const err = document.getElementById('error-box');
                 err.style.display = 'block';
                 if (navigator.vibrate) navigator.vibrate(200);
-                if (lives === 0) gameOver("נגמרו החיים!");
-            }
-        }
-
-        function finishGame() {
-            clearInterval(timerInterval);
-            stopBackgroundMusic();
-            playSound('win', false, 1.0);
-            document.getElementById('screen-2').classList.remove('active');
-            document.getElementById('screen-3').classList.add('active');
-            moreConfetti();
-            setInterval(moreConfetti, 2500);
-        }
-
-        function moreConfetti() {
-            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#E52521', '#43B047', '#FFD700', '#0099ff'] });
-        }
-
-        // --- VISUAL VIEWPORT OPTIMIZATION FOR IOS ---
-        // This ensures the page doesn't "bounce" and adapts to the keyboard space
-        
-        const viewportWrapper = document.getElementById('viewport-wrapper');
-        const inputField = document.getElementById('answer-input');
-
-        // Function to handle resizing based on the visual viewport (keyboard open/close)
-        function handleResize() {
-            if (!window.visualViewport) return;
-
-            // Set the wrapper height to match the visible area exactly
-            viewportWrapper.style.height = window.visualViewport.height + 'px';
-            
-            // Scroll to top of the wrapper to ensure top content isn't hidden
-            // (unless we are typing, then we might want to center the input)
-            if (docum
+                if (lives === 0) game
