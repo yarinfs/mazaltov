@@ -2,6 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <!-- Viewport settings to prevent zooming and handle notches (viewport-fit=cover) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>יום הולדת לאבא!</title>
     
@@ -18,43 +19,67 @@
             --bg-panel: #ffffff;
         }
 
-        html, body {
+        /* --- MOBILE LOCKDOWN CSS --- */
+        html {
+            height: 100%;
+            width: 100%;
+            overflow: hidden; /* No scrollbars */
+            position: fixed; /* Locks the document in place */
+        }
+
+        body {
             margin: 0; padding: 0;
-            width: 100%; height: 100%;
-            overflow: hidden;
-            position: fixed;
+            height: 100%; width: 100%;
+            overflow: hidden; /* Double lock */
+            position: fixed; /* Double lock */
             font-family: 'Rubik', sans-serif;
             display: flex; align-items: center; justify-content: center;
             background: #000;
-            touch-action: none;
+            /* Prevent default browser gestures like swipe-nav */
+            touch-action: none; 
+            /* Disable pull-to-refresh rubber banding */
+            overscroll-behavior: none;
         }
 
         * {
             box-sizing: border-box;
-            user-select: none;
+            user-select: none; /* Prevent text selection */
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* Background Video */
         #bg-video {
             position: absolute; top: 0; left: 0;
             width: 100%; height: 100%;
             object-fit: cover; z-index: -10;
         }
+
+        /* Retro Scanlines Effect */
         .scanlines {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
             background-size: 100% 4px; pointer-events: none; z-index: 100;
         }
+        
+        /* Dark Overlay for readability */
         .overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.5); z-index: -5;
         }
 
+        /* --- GAME PANEL --- */
         .game-panel {
             background-color: var(--bg-panel);
-            width: 90%; max-width: 400px;
-            max-height: 85vh; 
+            width: 90%; 
+            max-width: 400px;
+            
+            /* Use dvh (Dynamic Viewport Height) for mobile browsers */
+            max-height: 90dvh; 
+            
+            /* Allow internal scrolling ONLY if content overflows (e.g. keyboard open) */
             overflow-y: auto; 
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            
             padding: 20px;
             text-align: center; position: relative; display: none;
             border: 4px solid black;
@@ -64,6 +89,7 @@
             z-index: 200;
         }
         .active { display: block; }
+        
         @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
         h1 {
@@ -75,6 +101,7 @@
             font-weight: 700; font-size: 1.1rem; color: #333; margin-bottom: 20px; line-height: 1.4;
         }
 
+        /* HUD */
         .hud-container {
             display: flex; justify-content: space-between; align-items: center;
             background: var(--pipe-green); padding: 8px 12px; border-radius: 10px;
@@ -90,6 +117,7 @@
         }
         .timer-label { font-size: 0.7rem; color: #e0ffd4; margin-bottom: 2px; }
 
+        /* Math Question Block */
         .math-block {
             background-color: var(--dirt-base);
             background-image:
@@ -109,19 +137,21 @@
             padding: 12px 0; width: 100%; border: 3px solid #000; border-radius: 10px;
             cursor: pointer; margin-top: 10px; box-shadow: 0 5px 0 var(--pipe-dark);
             transition: all 0.1s;
+            /* Prevents delay and double-tap zoom on mobile */
             touch-action: manipulation;
         }
         .btn:active { transform: translateY(5px); box-shadow: 0 0 0 var(--pipe-dark); }
         .btn-start { background-color: var(--mario-red); box-shadow: 0 5px 0 #8a0000; }
         .btn-start:active { box-shadow: 0 0 0 #8a0000; }
         
-        /* כפתור אפור כשטוען */
         .btn:disabled { background-color: #999; box-shadow: 0 5px 0 #666; cursor: wait; }
 
         input[type="tel"] {
             width: 100%; padding: 10px; font-family: 'Rubik', sans-serif; font-weight: 900;
             font-size: 1.8rem; text-align: center; border: 3px solid #000; border-radius: 10px;
             background: #fff; margin-bottom: 10px; outline: none;
+            /* Prevents auto-zoom on iPhone (must be 16px or larger text actually, but this helps) */
+            font-size: 1.8rem; 
         }
 
         .error-msg { 
@@ -142,26 +172,24 @@
 </head>
 <body>
 
+    <!-- A transparent blocker for extra safety -->
     <div style="position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1;"></div>
 
     <div class="scanlines"></div>
     <video id="bg-video" autoplay muted loop playsinline webkit-playsinline><source src="background.mp4" type="video/mp4"></video>
     <div class="overlay"></div>
 
-    <!-- אין כאן תגיות אודיו יותר - הכל מנוהל ב-JAVASCRIPT -->
-
-    <!-- שלב 1: פתיחה -->
+    <!-- Screen 1: Intro -->
     <div id="screen-1" class="game-panel active">
         <h1>תעצור! 🛑</h1>
         <p class="intro-text">
             לפני שמתחילים אני צריך לבדוק אם אתה באמת אבא שלי.
             בשביל זה הכנתי לך מבחן בחשבון שבו אתה צריך להראות את המהירות שלך!
         </p>
-        <!-- הכפתור מנוטרל עד שהסאונד נטען -->
         <button class="btn btn-start" id="init-game-btn" disabled>טוען סאונד...</button>
     </div>
 
-    <!-- שלב 2: משחק -->
+    <!-- Screen 2: Game -->
     <div id="screen-2" class="game-panel">
         <div class="hud-container">
             <div class="hud-item">
@@ -184,7 +212,7 @@
         <button class="btn" onclick="checkAnswer()">בדיקה</button>
     </div>
 
-    <!-- שלב 3: ניצחון -->
+    <!-- Screen 3: Win -->
     <div id="screen-3" class="game-panel">
         <h1 class="win-title">מזל טוב! 👑</h1>
         <div class="note">
@@ -196,7 +224,7 @@
         <button class="btn btn-start" onclick="moreConfetti()">תלחץ לעוד קונפטי!</button>
     </div>
 
-    <!-- שלב 4: הפסד -->
+    <!-- Screen 4: Fail -->
     <div id="screen-fail" class="game-panel fail-screen">
         <h1 class="fail-text">גיים אובר!</h1>
         <p id="fail-reason" style="color: white; font-weight: bold; font-size: 1.2rem;">הזמן נגמר...</p>
@@ -205,21 +233,39 @@
     </div>
 
     <script>
-        // --- מערכת סאונד אולטימטיבית לאייפון (Web Audio API) ---
-        // המערכת הזאת עוקפת את כפתור ה-Mute ומנגנת קבצים ישירות מהזיכרון
+        // --- 1. Mobile Scrolling & Gesture Blocker ---
+        
+        // This effectively blocks "rubber band" scrolling on the body
+        document.body.addEventListener('touchmove', function(e) {
+            // Find if the touch is happening inside a .game-panel
+            const panel = e.target.closest('.game-panel');
+            
+            // If touch is NOT in the panel, BLOCK IT.
+            if (!panel) {
+                e.preventDefault();
+            } else {
+                // If inside panel, check if it actually has scrollable content
+                const isScrollable = panel.scrollHeight > panel.clientHeight;
+                if (!isScrollable) {
+                     // If panel fits on screen, block scrolling inside it too to prevent bounce
+                    e.preventDefault();
+                }
+                // Otherwise, let it scroll normally (for when keyboard opens)
+            }
+        }, { passive: false });
+
+        // --- 2. Web Audio API (Fixes iPhone Audio) ---
         
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const soundBuffers = {};
-        let bgSource = null; // משתנה לשמירת המוזיקה המתנגנת ברקע
+        let bgSource = null;
 
-        // רשימת הקבצים שלך - שים לב לשמות בדיוק כמו בתמונה
         const audioFiles = {
             'bg': 'sound.mp3',
-            'win': 'sound2.mp4',  // כן, זה MP4 אבל אנחנו נחלץ ממנו רק אודיו
+            'win': 'sound2.mp4',
             'fail': 'sound3.mp4'
         };
 
-        // פונקציה לטעינת סאונד מהרשת ופענוח לזיכרון
         async function loadSound(name, url) {
             try {
                 const response = await fetch(url);
@@ -232,48 +278,36 @@
             }
         }
 
-        // טעינת כל הסאונדים בהתחלה
         async function initAudio() {
             const promises = Object.entries(audioFiles).map(([name, url]) => loadSound(name, url));
             await Promise.all(promises);
             
-            // כשהכל טעון, משחררים את הכפתור
             const btn = document.getElementById('init-game-btn');
             btn.innerText = "יאללה למבחן";
             btn.disabled = false;
         }
 
-        // קריאה לפונקציית הטעינה
         initAudio();
 
-        // פונקציה לניגון סאונד
         function playSound(name, loop = false, volume = 1.0) {
             if (!soundBuffers[name]) return;
-
-            // אם זה מוזיקת רקע, עוצרים קודם אם כבר מתנגן
             if (name === 'bg' && bgSource) {
                 try { bgSource.stop(); } catch(e){}
             }
 
-            // יצירת מקור סאונד חדש
             const source = audioCtx.createBufferSource();
             source.buffer = soundBuffers[name];
             source.loop = loop;
 
-            // שליטה בווליום
             const gainNode = audioCtx.createGain();
             gainNode.gain.value = volume;
 
-            // חיבורים: מקור -> ווליום -> רמקולים
             source.connect(gainNode);
             gainNode.connect(audioCtx.destination);
 
             source.start(0);
 
-            // שמירת הרפרנס אם זה רקע כדי שנוכל לעצור אחר כך
-            if (name === 'bg') {
-                bgSource = source;
-            }
+            if (name === 'bg') bgSource = source;
         }
 
         function stopBackgroundMusic() {
@@ -283,15 +317,8 @@
             }
         }
 
-        // --- לוגיקת משחק ---
+        // --- 3. Game Logic ---
         
-        // מניעת גלילה לאייפון
-        document.body.addEventListener('touchmove', function(e) {
-            if (!e.target.closest('.game-panel')) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-
         const questions = [
             { n1: 111,  op: '×', n2: 14,  ans: 1554 },
             { n1: 12,  op: '×', n2: 810,  ans: 9720 },
@@ -304,23 +331,17 @@
         let lives = 3;
         let timerInterval;
 
-        // התחלת המשחק
         document.getElementById('init-game-btn').addEventListener('click', function() {
-            // פעולה קריטית לאייפון: שחרור מנוע האודיו בלחיצה הראשונה
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
-
             startGame();
         });
 
         function startGame() {
-            // ניגון מוזיקת רקע (ווליום 0.5)
             playSound('bg', true, 0.5);
-
             document.getElementById('screen-1').classList.remove('active');
             document.getElementById('screen-2').classList.add('active');
-            
             startTimer();
             loadQuestion();
             updateLives();
@@ -330,14 +351,8 @@
             timerInterval = setInterval(function() {
                 timeLeft--;
                 document.getElementById('time-left').innerText = timeLeft;
-
-                if (timeLeft <= 10) {
-                    document.getElementById('time-left').style.color = '#ffcccb';
-                }
-
-                if (timeLeft <= 0) {
-                    gameOver("נגמר הזמן!");
-                }
+                if (timeLeft <= 10) document.getElementById('time-left').style.color = '#ffcccb';
+                if (timeLeft <= 0) gameOver("נגמר הזמן!");
             }, 1000);
         }
 
@@ -349,13 +364,11 @@
 
         function gameOver(reason) {
             clearInterval(timerInterval);
-            stopBackgroundMusic(); // עצירת המוזיקה
-            playSound('fail', false, 1.0); // ניגון הפסד
-
+            stopBackgroundMusic();
+            playSound('fail', false, 1.0);
             document.getElementById('fail-reason').innerText = reason;
             document.getElementById('screen-2').classList.remove('active');
             document.getElementById('screen-fail').classList.add('active');
-            
             if (navigator.vibrate) navigator.vibrate(400);
         }
 
@@ -371,7 +384,6 @@
         function checkAnswer() {
             const val = document.getElementById('answer-input').value;
             if(val === "") return;
-
             const correct = questions[currentQ].ans;
 
             if (parseInt(val) === correct) {
@@ -386,20 +398,15 @@
                 updateLives();
                 const err = document.getElementById('error-box');
                 err.style.display = 'block';
-                
                 if (navigator.vibrate) navigator.vibrate(200);
-
-                if (lives === 0) {
-                    gameOver("נגמרו החיים!");
-                }
+                if (lives === 0) gameOver("נגמרו החיים!");
             }
         }
 
         function finishGame() {
             clearInterval(timerInterval);
-            stopBackgroundMusic(); // עצירת המוזיקה
-            playSound('win', false, 1.0); // ניגון ניצחון
-
+            stopBackgroundMusic();
+            playSound('win', false, 1.0);
             document.getElementById('screen-2').classList.remove('active');
             document.getElementById('screen-3').classList.add('active');
             moreConfetti();
